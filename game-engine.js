@@ -1,4 +1,6 @@
-const SUITS = ['red', 'blue', 'yellow', 'purple'];
+const { determineTrickWinner, BLACK_SUIT } = require('./trick-rules');
+
+const SUITS = ['red', 'blue', 'yellow', BLACK_SUIT];
 
 function buildDeck() {
   const d = [];
@@ -22,25 +24,12 @@ function shuffle(a) {
   return a;
 }
 
-function determineTrickWinner(trick, whaleMode) {
-  const skull = trick.find((e) => e.card.type === 'skull');
-  if (skull) return skull;
-  const pirates = trick.filter((e) => e.card.type === 'pirate');
-  if (pirates.length) return pirates[0];
-  const mermaids = trick.filter((e) => e.card.type === 'mermaid');
-  if (mermaids.length) return mermaids[0];
-  const nums = trick.filter((e) => e.card.type === 'number');
-  if (!nums.length) return trick[0];
-  if (whaleMode) {
-    const maxN = Math.max(...nums.map((e) => e.card.n));
-    return nums.find((e) => e.card.n === maxN);
-  }
-  const blacks = nums.filter((e) => e.card.suit === 'purple');
-  if (blacks.length) return blacks.reduce((a, b) => (a.card.n > b.card.n ? a : b));
-  const led = trick.find((e) => e.card.type === 'number');
-  const suitCards = nums.filter((e) => e.card.suit === led.card.suit);
-  if (suitCards.length) return suitCards.reduce((a, b) => (a.card.n > b.card.n ? a : b));
-  return led;
+function snapshotTrick(trick) {
+  return trick.map((e) => ({
+    pIdx: e.pIdx,
+    card: { ...e.card },
+    playOrder: e.playOrder,
+  }));
 }
 
 function createPlayer(id, name, slot) {
@@ -140,9 +129,20 @@ function startRound(game) {
 
 function resolveTrick(game) {
   const trick = game.currentTrick;
+  const trickSnapshot = snapshotTrick(trick);
+  const lastPlayerIdx = trick.length ? trick[trick.length - 1].pIdx : null;
   const hasKraken = trick.some((e) => e.card.type === 'kraken');
   const hasWhale = trick.some((e) => e.card.type === 'whale');
-  let result = { type: 'normal', message: '', winnerIdx: null, nextLeader: game.trickLeader, bonus: 0 };
+  let result = {
+    type: 'normal',
+    message: '',
+    winnerIdx: null,
+    nextLeader: game.trickLeader,
+    bonus: 0,
+    trickSnapshot,
+    lastPlayerIdx,
+    roundDone: false,
+  };
 
   if (hasKraken) {
     const withoutKraken = trick.filter((e) => e.card.type !== 'kraken');
@@ -153,14 +153,18 @@ function resolveTrick(game) {
       message: '크라켄 — 전원 패배',
       winnerIdx: null,
       nextLeader,
+      trickSnapshot,
+      lastPlayerIdx,
+      roundDone: false,
     };
     addLog(game, `트릭 ${game.trickCount + 1}: 크라켄 — 전원 패배`);
     game.trickCount++;
     game.trickLeader = nextLeader;
     game.currentTrick = [];
     game.activePlayerIdx = nextLeader;
+    result.roundDone = game.trickCount >= game.round;
     game.lastTrickResult = result;
-    return game.trickCount >= game.round;
+    return result.roundDone;
   }
 
   if (hasWhale) {
@@ -172,14 +176,18 @@ function resolveTrick(game) {
         message: '흰고래 — 특수만 있어 전원 패배',
         winnerIdx: null,
         nextLeader: whalePIdx,
+        trickSnapshot,
+        lastPlayerIdx,
+        roundDone: false,
       };
       addLog(game, `트릭 ${game.trickCount + 1}: 흰고래 — 특수만 있어 전원 패배`);
       game.trickCount++;
       game.trickLeader = whalePIdx;
       game.currentTrick = [];
       game.activePlayerIdx = whalePIdx;
+      result.roundDone = game.trickCount >= game.round;
       game.lastTrickResult = result;
-      return game.trickCount >= game.round;
+      return result.roundDone;
     }
     const maxN = Math.max(...numCards.map((e) => e.card.n));
     const topCards = numCards.filter((e) => e.card.n === maxN);
@@ -191,14 +199,19 @@ function resolveTrick(game) {
       message: '흰고래 — ' + winnerP.name + ' 승리',
       winnerIdx: winner.pIdx,
       nextLeader: winner.pIdx,
+      bonus: 0,
+      trickSnapshot,
+      lastPlayerIdx,
+      roundDone: false,
     };
     addLog(game, `트릭 ${game.trickCount + 1}: 흰고래 — ${winnerP.name} 승리`);
     game.trickCount++;
     game.trickLeader = winner.pIdx;
     game.currentTrick = [];
     game.activePlayerIdx = winner.pIdx;
+    result.roundDone = game.trickCount >= game.round;
     game.lastTrickResult = result;
-    return game.trickCount >= game.round;
+    return result.roundDone;
   }
 
   const winner = determineTrickWinner(trick, false);
@@ -220,14 +233,18 @@ function resolveTrick(game) {
     winnerIdx: winner.pIdx,
     nextLeader: winner.pIdx,
     bonus,
+    trickSnapshot,
+    lastPlayerIdx,
+    roundDone: false,
   };
   addLog(game, `트릭 ${game.trickCount + 1}: ${winnerP.name} 획득`);
   game.trickCount++;
   game.trickLeader = winner.pIdx;
   game.currentTrick = [];
   game.activePlayerIdx = winner.pIdx;
+  result.roundDone = game.trickCount >= game.round;
   game.lastTrickResult = result;
-  return game.trickCount >= game.round;
+  return result.roundDone;
 }
 
 function endRound(game) {

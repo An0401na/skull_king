@@ -83,6 +83,9 @@
   .hand-hidden { text-align: center; padding: 1.5rem 1rem; color: rgba(245,230,200,0.55); font-size: 0.92rem; border: 1px dashed rgba(201,162,39,0.25); border-radius: 10px; }
   .played-card-wrap.last-play .card { box-shadow: 0 0 0 2px var(--gold-light), 0 6px 18px rgba(201,162,39,0.45); }
   .played-card-wrap.last-play .pcn { color: var(--gold-light); font-weight: 600; }
+  .played-card-wrap.leader-cand .card { box-shadow: 0 0 0 2px #7ec8ff, 0 4px 14px rgba(100,180,255,0.35); }
+  .played-card-wrap.leader-cand .pcn { color: #9ed4ff; font-weight: 600; }
+  .trick-leader-chip { margin: 0.35rem 1rem 0; padding: 0.45rem 0.75rem; border-radius: 8px; background: rgba(100,180,255,0.12); border: 1px solid rgba(100,180,255,0.35); font-size: 0.88rem; color: #b8dcff; text-align: center; display: none; }
   .trick-review-cards { display: flex; gap: 0.65rem; justify-content: center; flex-wrap: wrap; margin: 0.75rem 0; }
   .trick-review-result { font-size: 0.95rem; color: rgba(245,230,200,0.85); line-height: 1.55; margin-bottom: 0.5rem; }
 
@@ -97,7 +100,8 @@
   .card.red { background: linear-gradient(145deg,#a02020,#6a1010); color:#ffd0d0; border-color:rgba(255,150,150,0.3); }
   .card.blue { background: linear-gradient(145deg,#1a4a9a,#0d2a6a); color:#c0d8ff; border-color:rgba(100,150,255,0.3); }
   .card.yellow { background: linear-gradient(145deg,#9a8a1a,#6a5a10); color:#fff0a0; border-color:rgba(255,220,80,0.3); }
-  .card.purple { background: linear-gradient(145deg,#5a1a9a,#3a0a6a); color:#ddb0ff; border-color:rgba(180,100,255,0.3); }
+  .card.black { background: linear-gradient(145deg,#3a3a3a,#121212); color:#f0f0f0; border-color:rgba(200,200,200,0.35); }
+  .card.purple { background: linear-gradient(145deg,#3a3a3a,#121212); color:#f0f0f0; border-color:rgba(200,200,200,0.35); }
   .card.c-escape { background: linear-gradient(145deg,#1a4a1a,#0a2a0a); color:#a0ffa0; border-color:rgba(100,255,100,0.3); }
   .card.c-skull { background: linear-gradient(145deg,#2a1a0a,#1a0a00); color:var(--gold-light); border-color:rgba(201,162,39,0.5); }
   .card.c-mermaid { background: linear-gradient(145deg,#0a3a4a,#051a2a); color:#80e0ff; border-color:rgba(80,200,255,0.4); }
@@ -169,8 +173,8 @@
     <div class="lobby-card">
       <h3>🃏 카드 구성</h3>
       <div class="card-guide">
-        <div class="guide-item">🔴🔵🟡🟣 숫자 1~14 (×4색)</div>
-        <div class="guide-item">🏳️ 도주 ×5</div>
+        <div class="guide-item">🔴🔵🟡⬛ 숫자 1~14 (×4색)</div>
+        <div class="guide-item">🏳️ 탈출 ×5</div>
         <div class="guide-item">🏴‍☠️ 해적 ×5</div>
         <div class="guide-item">🧜 인어 ×2</div>
         <div class="guide-item">☠️ 스컬킹 ×1</div>
@@ -248,6 +252,7 @@
 
     <div id="playPanel" style="display:none;">
       <div id="specialMsg"></div>
+      <div id="trickLeaderChip" class="trick-leader-chip"></div>
       <div class="trick-area">
         <div class="trick-label" id="trickLabel">트릭 1</div>
         <div class="played-cards" id="playedCards"></div>
@@ -308,14 +313,16 @@
   </div>
 </div>
 
+<script src="trick-rules.js"></script>
 <script src="config.js"></script>
 <script>
-const SUITS=['red','blue','yellow','purple'];
-const SNAMES={red:'♥빨',blue:'♦파',yellow:'♣노',purple:'♠보'};
+const SUITS=['red','blue','yellow','black'];
+const SNAMES={red:'♥빨',blue:'♦파',yellow:'♣노',black:'♠검',purple:'♠검'};
+const determineTrickWinner=SkullKingRules.determineTrickWinner;
 const AVATARS=['🦜','🐙','🦈','🐚','⚓','🐠'];
 const PCOLORS=['#c94040','#4070c9','#c9a020','#9040c9','#40a960','#c96040'];
 let G={};
-const NET={ws:null,playerId:null,roomCode:null,connected:false,roundModalShown:false};
+const NET={ws:null,playerId:null,roomCode:null,connected:false,roundModalShown:false,trickReviewKey:null};
 
 function isStaticHost(){
   return location.hostname.endsWith('github.io')||location.protocol==='file:';
@@ -445,7 +452,7 @@ function applyOnlineGame(state,hand,myIdx){
   G.activePIdx=state.activePlayerIdx;
   G.roundHistory=state.roundHistory||[];
   G.lastTrickResult=state.lastTrickResult;
-  G.roundSummary=state.roundSummary;
+  G.roundSummary=state.roundSummary||null;
   G.players=state.players.map((p,i)=>({
     name:p.name,avatar:p.avatar,color:p.color,score:p.score,roundScores:p.roundScores||[],
     tricksWon:p.tricksWon,bonusPoints:p.bonusPoints,
@@ -457,9 +464,9 @@ function applyOnlineGame(state,hand,myIdx){
   document.getElementById('turnCover').style.display='none';
   showScreen('game');
   renderOnlineUI();
-  if(state.phase==='round_end'&&state.roundSummary&&!NET.roundModalShown){
-    NET.roundModalShown=true;
-    showRoundSummary(state.roundSummary);
+  if(state.phase==='round_end'&&state.roundSummary){
+    if(state.lastTrickResult&&state.lastTrickResult.trickSnapshot)maybeShowOnlineTrickReview();
+    else if(!NET.roundModalShown){NET.roundModalShown=true;showRoundSummary(state.roundSummary);}
   }
   if(state.status==='finished')showFinal();
 }
@@ -502,6 +509,7 @@ function renderOnlineUI(){
     updateTrickLabel();
     renderPlayedCards();
     showTrickResultMsg();
+    maybeShowOnlineTrickReview();
     if(isMyTurn()){
       document.getElementById('playBtnArea').style.display='block';
       document.getElementById('btnPlayCard').disabled=G.selectedCard==null;
@@ -521,6 +529,37 @@ function renderOnlineUI(){
   if(G.log)G.log.forEach(m=>{});
 }
 
+function leaderPIdxFromTrick(trick){
+  const c=SkullKingRules.getTrickLeaderCandidate(trick);
+  return c&&c.entry?c.entry.pIdx:null;
+}
+function updateTrickLeaderCandidate(){
+  const chip=document.getElementById('trickLeaderChip');
+  if(!chip)return;
+  if(G.phase!=='play'||!G.currentTrick.length){chip.style.display='none';return;}
+  const c=SkullKingRules.getTrickLeaderCandidate(G.currentTrick);
+  if(!c||!c.entry){
+    chip.style.display=c&&c.note?'block':'none';
+    if(c&&c.note)chip.textContent=c.note;
+    return;
+  }
+  const p=G.players[c.entry.pIdx];
+  chip.style.display='block';
+  chip.innerHTML=`🏅 우승 후보: ${p.avatar} ${p.name} · ${cardLabel(c.entry.card)}`;
+}
+function maybeShowOnlineTrickReview(){
+  const r=G.lastTrickResult;
+  if(!G.online||!r||!r.trickSnapshot||G.currentTrick.length)return;
+  const key=G.round+'-'+G.trickCount;
+  if(NET.trickReviewKey===key)return;
+  NET.trickReviewKey=key;
+  G.lastTrickPlayer=r.lastPlayerIdx;
+  G.trickReviewSnapshot=r.trickSnapshot;
+  G.trickReviewRoundDone=!!r.roundDone;
+  showTrickResultMsg();
+  document.getElementById('playedCards').innerHTML=renderTrickCardsHtml(r.trickSnapshot,G.lastTrickPlayer,leaderPIdxFromTrick(r.trickSnapshot));
+  showTrickReview();
+}
 function showTrickResultMsg(){
   const r=G.lastTrickResult;
   const sm=document.getElementById('specialMsg');
@@ -732,14 +771,17 @@ function makeCardEl(card,clickable,idx){
 }
 
 function cardCls(card){
-  if(card.type==='number')return card.suit;
+  if(card.type==='number'){
+    if(card.suit==='black'||card.suit==='purple')return 'black';
+    return card.suit;
+  }
   const map={escape:'c-escape',pirate:'c-pirate',mermaid:'c-mermaid',skull:'c-skull',kraken:'c-kraken',whale:'c-whale'};
   return map[card.type]||'';
 }
 
 function cardHTML(card){
   if(card.type==='number')return `<div class="cs">${SNAMES[card.suit]}</div><div class="cn">${card.n}</div>`;
-  const map={escape:'🏳️<br>도주',pirate:'🏴‍☠️<br>해적',mermaid:'🧜<br>인어',skull:'☠️<br>스컬킹',kraken:'🦑<br>크라켄',whale:'🐋<br>흰고래'};
+  const map={escape:'🏳️<br>탈출',pirate:'🏴‍☠️<br>해적',mermaid:'🧜<br>인어',skull:'☠️<br>스컬킹',kraken:'🦑<br>크라켄',whale:'🐋<br>흰고래'};
   return `<div class="cname">${map[card.type]||''}</div>`;
 }
 
@@ -770,16 +812,18 @@ function playCard(pIdx,card){
   setTimeout(doNextPlay,300);
 }
 
-function renderTrickCardsHtml(trick,highlightPIdx){
+function renderTrickCardsHtml(trick,highlightPIdx,leaderPIdx){
+  const leader=leaderPIdx!=null?leaderPIdx:leaderPIdxFromTrick(trick);
   return trick.map(({pIdx,card})=>`
-    <div class="played-card-wrap${highlightPIdx===pIdx?' last-play':''}">
+    <div class="played-card-wrap${highlightPIdx===pIdx?' last-play':''}${leader===pIdx?' leader-cand':''}">
       <div class="card played ${cardCls(card)}">${cardHTML(card)}</div>
       <div class="pcn">${G.players[pIdx].avatar} ${G.players[pIdx].name}</div>
     </div>`).join('');
 }
 
 function renderPlayedCards(){
-  document.getElementById('playedCards').innerHTML=renderTrickCardsHtml(G.currentTrick,G.lastTrickPlayer);
+  document.getElementById('playedCards').innerHTML=renderTrickCardsHtml(G.currentTrick,G.lastTrickPlayer,leaderPIdxFromTrick(G.currentTrick));
+  updateTrickLeaderCandidate();
 }
 
 function resolveTrick(){
@@ -830,7 +874,7 @@ function resolveTrick(){
     const winnerP=G.players[winner.pIdx];
     winnerP.tricksWon=(winnerP.tricksWon||0)+1;
     const tiedMsg=topCards.length>1?' (같은 숫자 — 먼저 낸 쪽 승리)':'';
-    sm.innerHTML=`<div class="special-msg msg-whale">🐋 흰고래! 모든 특수 카드가 도주로 변환, 리드 수트 무시. 숫자 카드 최고값으로 승자 결정${tiedMsg}.</div>`;
+    sm.innerHTML=`<div class="special-msg msg-whale">🐋 흰고래! 모든 특수 카드가 탈출로 변환, 리드 수트 무시. 숫자 카드 최고값으로 승자 결정${tiedMsg}.</div>`;
     document.getElementById('trickWinnerMsg').textContent=`${winnerP.avatar} ${winnerP.name} 승리!`;
     addLog(`트릭 ${G.trickCount+1}: 흰고래 — ${winnerP.name} 승리`);
     G.trickCount++; G.trickLeader=winner.pIdx; G.currentTrick=[];
@@ -867,7 +911,7 @@ function resolveTrick(){
 function queueTrickReview(trickSnapshot,roundDone){
   G.trickReviewSnapshot=trickSnapshot;
   G.trickReviewRoundDone=roundDone;
-  document.getElementById('playedCards').innerHTML=renderTrickCardsHtml(trickSnapshot,G.lastTrickPlayer);
+  document.getElementById('playedCards').innerHTML=renderTrickCardsHtml(trickSnapshot,G.lastTrickPlayer,leaderPIdxFromTrick(trickSnapshot));
   showTrickReview();
 }
 
@@ -879,7 +923,7 @@ function showTrickReview(){
   document.getElementById('trickReviewLead').textContent=lp&&cardPlayed
     ? `${lp.avatar} ${lp.name}님이 마지막으로 ${cardLabel(cardPlayed.card)}을(를) 냈습니다.`
     : '이번 트릭에 낸 카드입니다.';
-  document.getElementById('trickReviewCards').innerHTML=renderTrickCardsHtml(trick,lastP);
+  document.getElementById('trickReviewCards').innerHTML=renderTrickCardsHtml(trick,lastP,leaderPIdxFromTrick(trick));
   const tw=document.getElementById('trickWinnerMsg').textContent;
   const sm=document.getElementById('specialMsg');
   const smEl=sm.querySelector('.special-msg');
@@ -892,7 +936,7 @@ function showTrickReview(){
 
 function cardLabel(card){
   if(card.type==='number')return `${SNAMES[card.suit]} ${card.n}`;
-  const labels={escape:'도주',pirate:'해적',mermaid:'인어',skull:'스컬킹',kraken:'크라켄',whale:'흰고래'};
+  const labels={escape:'탈출',pirate:'해적',mermaid:'인어',skull:'스컬킹',kraken:'크라켄',whale:'흰고래'};
   return labels[card.type]||'카드';
 }
 
@@ -902,34 +946,15 @@ function continueAfterTrickReview(){
   document.getElementById('trickWinnerMsg').textContent='';
   document.getElementById('playedCards').innerHTML='';
   G.trickReviewSnapshot=null;
+  if(G.online){
+    if(G.trickReviewRoundDone&&G.phase==='round_end'&&G.roundSummary&&!NET.roundModalShown){
+      NET.roundModalShown=true;
+      showRoundSummary(G.roundSummary);
+    }
+    return;
+  }
   if(G.trickReviewRoundDone)endRound();
   else doNextPlay();
-}
-
-function determineTrickWinner(trick,whaleMode){
-  // skull
-  let skull=trick.find(e=>e.card.type==='skull');if(skull)return skull;
-  // pirate
-  let pirates=trick.filter(e=>e.card.type==='pirate');if(pirates.length)return pirates[0];
-  // mermaid
-  let mermaids=trick.filter(e=>e.card.type==='mermaid');
-  if(mermaids.length)return mermaids[0];
-  // number cards
-  let nums=trick.filter(e=>e.card.type==='number');
-  if(!nums.length)return trick[0];
-  if(whaleMode){
-    // 수트 무관, 최고 숫자, 동점이면 먼저 낸 쪽
-    const maxN=Math.max(...nums.map(e=>e.card.n));
-    return nums.find(e=>e.card.n===maxN);
-  }
-  // 보라(흑) 트럼프
-  let blacks=nums.filter(e=>e.card.suit==='purple');
-  if(blacks.length)return blacks.reduce((a,b)=>a.card.n>b.card.n?a:b);
-  // 리드 수트
-  const led=trick.find(e=>e.card.type==='number');
-  let suitCards=nums.filter(e=>e.card.suit===led.card.suit);
-  if(suitCards.length)return suitCards.reduce((a,b)=>a.card.n>b.card.n?a:b);
-  return led;
 }
 
 function endRound(){
@@ -977,62 +1002,17 @@ function showScores(){
 function closeScores(){document.getElementById('scoreModal').style.display='none';}
 
 const RULES_HTML=`
-  <div class="rules-section">
-    <h3>⚓ 게임 목표</h3>
-    <p>10라운드 동안 트릭(패)을 가져와 점수를 모읍니다. <strong>최종 점수가 가장 높은 선원</strong>이 승리합니다. 2~6명이 한 기기(로컬) 또는 온라인 방에서 플레이할 수 있습니다.</p>
-  </div>
-  <div class="rules-section">
-    <h3>🌊 한 라운드 흐름</h3>
-    <ul>
-      <li>라운드 번호만큼 카드를 나눠 받습니다. (1라운드 1장 … 10라운드 10장)</li>
-      <li><strong>입찰</strong> — 이번 라운드에 가져올 트릭 수를 0~패 수 사이에서 선언합니다.</li>
-      <li><strong>플레이</strong> — 시계 방향으로 카드를 한 장씩 냅니다. 트릭 승자가 다음 트릭을 리드합니다.</li>
-      <li>라운드가 끝나면 입찰 대비 실제 획득 트릭으로 점수를 계산합니다.</li>
-    </ul>
-  </div>
-  <div class="rules-section">
-    <h3>🎯 입찰 · 점수</h3>
-    <ul>
-      <li><strong>입찰 적중</strong> (가져온 트릭 = 입찰, 입찰 ≥ 1): <strong>입찰 × 20</strong>점 + 보너스</li>
-      <li><strong>0 입찰 적중</strong> (트릭 0개): <strong>라운드 × 10</strong>점</li>
-      <li><strong>실패</strong>: 차이만큼 <strong>−10점/트릭</strong> (0 입찰 실패 시 <strong>−라운드 × 10</strong>)</li>
-    </ul>
-  </div>
-  <div class="rules-section">
-    <h3>🃏 카드 구성</h3>
-    <ul>
-      <li>🔴🔵🟡🟣 <strong>숫자 1~14</strong> (색당 14장) — ♠보라(보라)는 다른 색보다 강한 트럼프</li>
-      <li>🏳️ <strong>도주</strong> ×5 — 트릭에서 이기지 않음</li>
-      <li>🏴‍☠️ <strong>해적</strong> ×5 — 스컬킹·인어와 조합 시 보너스</li>
-      <li>🧜 <strong>인어</strong> ×2</li>
-      <li>☠️ <strong>스컬킹</strong> ×1 — 트릭에서 최우선 승리</li>
-      <li>🦑 <strong>크라켄</strong> ×1 · 🐋 <strong>흰고래</strong> ×1</li>
-    </ul>
-  </div>
-  <div class="rules-section">
-    <h3>🏆 트릭 승리 (일반)</h3>
-    <p>우선순위: <strong>스컬킹</strong> → <strong>해적</strong>(먼저 낸 장) → <strong>인어</strong> → <strong>숫자</strong>. 숫자만 있을 때는 ♠보라가 최고 숫자로 이기고, 없으면 <strong>리드한 색</strong> 중 가장 높은 숫자가 승리합니다. 리드 색을 맞추지 못하면 낸 카드로는 이길 수 없습니다.</p>
-  </div>
-  <div class="rules-section">
-    <h3>✨ 보너스 (해당 트릭)</h3>
-    <ul>
-      <li>☠️ 스컬킹 승리 + 🏴‍☠️ 해적: 해적 1장당 <strong>+30</strong></li>
-      <li>☠️ 스컬킹 승리 + 🧜 인어: <strong>+20</strong></li>
-      <li>🏴‍☠️ 해적 승리 + 🧜 인어: <strong>+20</strong></li>
-      <li>숫자 <strong>14</strong>로 승리: <strong>+10</strong></li>
-    </ul>
-  </div>
-  <div class="rules-section">
-    <h3>🦑 크라켄 · 🐋 흰고래</h3>
-    <ul>
-      <li><strong>크라켄</strong> — 모든 플레이어가 그 트릭에서 패배합니다. 크라켄을 빼고 계산했을 때 이겼을 플레이어가 다음 트릭을 리드합니다.</li>
-      <li><strong>흰고래</strong> — 모든 특수 카드가 도주로 취급되고 리드 수트가 없습니다. 숫자만 남으면 수트 무관 최고 숫자가 이기며, 같은 숫자면 <strong>먼저 낸 쪽</strong>이 승리합니다. 숫자가 없으면 전원 패배, 고래를 낸 플레이어가 다음 리드.</li>
-    </ul>
-  </div>
-  <div class="rules-section">
-    <h3>📱 로컬 플레이</h3>
-    <p>차례가 오면 기기를 넘겨받고 「패 확인하기」를 눌러 자신의 패만 본 뒤 카드를 냅니다.</p>
-  </div>`;
+  <div class="rules-section"><h3>⚓ 게임 목표</h3><p>10라운드 동안 트릭(패)을 가져와 점수를 모읍니다. <strong>최종 점수가 가장 높은 선원</strong>이 승리합니다.</p></div>
+  <div class="rules-section"><h3>🌊 진행</h3><ul><li>라운드마다 패를 라운드 수만큼 받습니다.</li><li>입찰 후 리드부터 시계 방향으로 카드를 냅니다.</li><li>카드를 낼 때마다 <strong>우승 후보</strong>가 표시됩니다.</li><li>마지막 플레이어가 낸 뒤 <strong>트릭 결과</strong>를 확인하고 진행합니다 (온라인·로컬 공통).</li></ul></div>
+  <div class="rules-section"><h3>🎯 입찰·점수</h3><ul><li>입찰 적중: 입찰×20+보너스</li><li>0 입찰 적중: 라운드×10</li><li>실패: 차이×−10</li></ul></div>
+  <div class="rules-section"><h3>🃏 숫자 카드</h3><ul><li>🔴🔵🟡⬛ 각 1~14</li><li><strong>검정</strong>은 다른 색보다 강한 트럼프</li><li>숫자만 있을 때 검정 최고 숫자, 없으면 리드 색 최고 숫자</li></ul></div>
+  <div class="rules-section"><h3>🏳️ 탈출</h3><p>탈출을 낸 플레이어는 그 트릭에서 이기지 못합니다. <strong>모두 탈출</strong>만 낸 경우 <strong>가장 먼저</strong> 낸 사람이 승리합니다.</p></div>
+  <div class="rules-section"><h3>🏴‍☠️ 해적</h3><ul><li>검정·다른 색·인어에게 승리, 스컬킹에게 패배</li><li>스컬킹 없이 해적 2장 이상이면 먼저 낸 해적 승리</li></ul></div>
+  <div class="rules-section"><h3>☠️ 스컬킹</h3><p>모든 색·해적보다 강하며, 이기는 것은 인어뿐입니다.</p></div>
+  <div class="rules-section"><h3>🧜 인어</h3><ul><li>검정·다른 색·스컬킹에게 승리, 해적에게 패배</li><li>해적 없이 인어 2장이면 먼저 낸 인어 승리</li><li>인어·스컬킹·해적이 한 트릭에 모두 나오면 인어를 낸 플레이어 승리</li></ul></div>
+  <div class="rules-section"><h3>🦑 크라켄·🐋 흰고래</h3><ul><li>크라켄: 전원 패배, 가상 승자가 다음 리드</li><li>흰고래: 특수는 탈출 취급, 숫자 최고값(동점은 먼저 낸 쪽), 숫자 없으면 전원 패배·고래가 리드</li></ul></div>
+  <div class="rules-section"><h3>✨ 보너스</h3><ul><li>스컬킹+해적: +30/장</li><li>스컬킹+인어: +20</li><li>해적 승리+인어: +20</li><li>14로 승리: +10</li></ul></div>
+  <div class="rules-section"><h3>참고</h3><p style="font-size:0.85rem;opacity:0.8">공식 확장 <strong>티그리스</strong>(해적/탈출 선택)는 이 덱에 포함되지 않습니다.</p></div>`;
 
 function showRules(){
   const el=document.getElementById('rulesContent');
