@@ -5,16 +5,26 @@ const root = path.join(__dirname, '..');
 const src = path.join(root, 'skull_king_kraken_whale_fixed.html');
 const docsDir = path.join(root, 'docs');
 
+if (!fs.existsSync(src)) {
+  console.error('Missing source HTML:', src);
+  process.exit(1);
+}
+
 fs.mkdirSync(docsDir, { recursive: true });
 fs.copyFileSync(src, path.join(docsDir, 'index.html'));
 fs.writeFileSync(path.join(docsDir, '.nojekyll'), '');
 
-const configPath = path.join(docsDir, 'config.js');
-const configDefault = `// 온라인(WebSocket) 서버를 Render 등에 배포한 뒤 아래 주석을 해제하세요.
-// window.SKULL_KING_WS = 'wss://your-app.onrender.com';
-`;
-if (!fs.existsSync(configPath)) {
-  fs.writeFileSync(configPath, configDefault);
-}
+const ws =
+  process.env.SKULL_KING_WS ||
+  'wss://skull-king-hy5s.onrender.com';
 
-console.log('docs/index.html ready for GitHub Pages');
+const configPath = path.join(docsDir, 'config.js');
+const isCi = !!process.env.GITHUB_ACTIONS;
+const configBody = isCi
+  ? `// GitHub Actions build — Render WebSocket\nwindow.SKULL_KING_WS = '${ws}';\n`
+  : `// 로컬: npm start 사용 시 비워 두세요.\n// GitHub Pages 수동 빌드 시 아래 주석 해제:\n// window.SKULL_KING_WS = '${ws}';\n`;
+
+fs.writeFileSync(configPath, configBody);
+
+console.log('docs/index.html ready');
+if (isCi) console.log('config.js →', ws);

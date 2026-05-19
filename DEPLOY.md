@@ -1,32 +1,46 @@
-# Render 배포 가이드
+# 배포 · 문제 해결
 
-## 1. GitHub에 코드 올리기
+## Render (온라인 + 로컬) — 메인 주소
 
-이 폴더에서 (이미 `git push` 했다면 생략):
+**https://skull-king-hy5s.onrender.com/**
+
+- 처음 접속이 **30~60초** 걸리면: 무료 플랜이 잠에서 깨는 중 → 새로고침
+- `Not Found`가 잠깐 보였다가 사라지면 같은 이유일 수 있음
+- **온라인** 탭으로 방 만들기 / 코드 참가
+
+---
+
+## GitHub Pages — Actions 실패할 때
+
+`build` 가 9초 만에 실패하면 대부분 **Pages 설정** 문제입니다.
+
+### 1) Pages 켜기 (필수, 한 번만)
+
+1. https://github.com/An0401na/skull_king/settings/pages
+2. **Build and deployment**
+3. **Source:** `GitHub Actions` 선택 (Deploy from branch 아님)
+
+### 2) 워크플로 다시 실행
+
+1. https://github.com/An0401na/skull_king/actions
+2. **Deploy GitHub Pages** → **Run workflow**
+
+### 3) 성공 후 주소
+
+https://an0401na.github.io/skull_king/
+
+(저장소 이름이 `skull_king` 일 때)
+
+Pages 빌드본은 **Render WebSocket**에 붙도록 `config.js`가 자동 생성됩니다.
+
+---
+
+## 코드 push
 
 ```bash
-git remote -v   # origin 확인
-git push -u origin main
+git add .
+git commit -m "Fix Pages deploy and Render health check"
+git push origin main
 ```
 
-## 2. Render 연결
-
-1. https://dashboard.render.com 로그인
-2. **New +** → **Blueprint**
-3. GitHub 계정 연결 후 **skull_king** 저장소 선택
-4. `render.yaml` 인식 → **Apply**
-5. 배포 로그에서 **Live** 될 때까지 대기 (약 3~5분)
-
-## 3. 주소 확인
-
-- Render 대시보드 → 서비스 **skull-king** → 상단 URL  
-  예: `https://skull-king.onrender.com`
-- 이 주소를 친구에게내면 **온라인 방 만들기** 가능
-
-## 문제 해결
-
-| 증상 | 해결 |
-|------|------|
-| 첫 접속이 매우 느림 | 무료 플랜 슬립 — 30초 후 새로고침 |
-| Build failed | Node 18+ 확인, `npm install` 로컬에서 테스트 |
-| WebSocket 끊김 | Render 무료는 유휴 시 종료 — 다시 접속 |
+push 후 Actions가 자동 실행됩니다.

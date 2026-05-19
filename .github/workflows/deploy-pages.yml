@@ -12,18 +12,29 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: node scripts/build-pages.js
+
+      - name: Build docs (Pages용 정적 사이트)
+        run: node scripts/build-pages.js
+        env:
+          # GitHub Pages에서 온라인 → Render WebSocket 서버
+          SKULL_KING_WS: wss://skull-king-hy5s.onrender.com
+
+      - name: Verify build output
+        run: test -f docs/index.html && test -f docs/config.js && ls -la docs
+
       - uses: actions/configure-pages@v4
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs

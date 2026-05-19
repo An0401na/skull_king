@@ -20,8 +20,13 @@ const wss = new WebSocketServer({ server });
 
 app.use(express.static(__dirname));
 
+const GAME_HTML = path.join(__dirname, 'skull_king_kraken_whale_fixed.html');
+
+app.get('/health', (_req, res) => res.type('text').send('ok'));
 app.get('/', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'skull_king_kraken_whale_fixed.html'));
+  res.sendFile(GAME_HTML, (err) => {
+    if (err) res.status(500).send('Game file not found');
+  });
 });
 
 const rooms = new Map();
