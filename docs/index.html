@@ -19,6 +19,15 @@
   .rule-list { font-size: 0.82rem; color: rgba(245,230,200,0.7); display: flex; flex-direction: column; gap: 0.4rem; }
   .rule-list li { list-style: none; padding-left: 0; line-height: 1.4; }
   .rule-list li strong { color: var(--gold-light); }
+  .rules-section { margin-bottom: 1.1rem; }
+  .rules-section:last-child { margin-bottom: 0; }
+  .rules-section h3 { font-family: 'Pirata One', cursive; color: var(--gold); font-size: 1.05rem; margin-bottom: 0.45rem; }
+  .rules-section p, .rules-section li { font-size: 0.86rem; color: rgba(245,230,200,0.75); line-height: 1.5; }
+  .rules-section ul { padding-left: 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+  .rules-section li strong { color: var(--gold-light); }
+  .btn-rules-link { font-family: 'Pirata One', cursive; background: rgba(201,162,39,0.12); border: 1px solid rgba(201,162,39,0.45); border-radius: 8px; color: var(--gold-light); padding: 0.4rem 1.1rem; cursor: pointer; font-size: 1rem; letter-spacing: 1px; margin-bottom: 1rem; transition: background 0.15s; }
+  .btn-rules-link:hover { background: rgba(201,162,39,0.28); }
+  .btn-rules-sm { background: rgba(201,162,39,0.15); border: 1px solid rgba(201,162,39,0.35); border-radius: 6px; color: var(--gold); padding: 0.18rem 0.55rem; cursor: pointer; font-size: 0.78rem; font-family: 'Crimson Pro', serif; }
 
   .player-setup { display: flex; flex-direction: column; gap: 0.65rem; }
   .player-row { display: flex; align-items: center; gap: 0.5rem; }
@@ -144,6 +153,8 @@
     <div class="game-title">Skull King</div>
     <div class="game-subtitle">해적들의 트릭 테이킹 카드 게임</div>
 
+    <button type="button" class="btn-rules-link" onclick="showRules()">📖 게임 설명</button>
+
     <p id="pagesNote" style="display:none;font-size:0.82rem;color:rgba(245,230,200,0.5);margin-bottom:0.75rem;">GitHub Pages — <strong style="color:var(--gold-light);">로컬</strong> 플레이 · 온라인은 서버 배포 후 config.js 설정</p>
     <div class="mode-tabs">
       <button class="mode-tab active" id="tabLocal" onclick="setLobbyMode('local')">📱 로컬</button>
@@ -207,6 +218,7 @@
       <div class="wait-list" id="waitPlayerList"></div>
       <button class="btn-primary" id="btnStartOnline" onclick="startOnlineGame()" style="display:none;">⛵ 항해 시작 (방장)</button>
       <p class="wait-msg" id="waitHint">플레이어를 기다리는 중...</p>
+      <button type="button" class="btn-secondary" onclick="showRules()" style="margin-top:0.75rem;width:100%;">📖 게임 설명</button>
       <button class="btn-secondary" onclick="leaveRoom()" style="margin-top:1rem;">나가기</button>
     </div>
   </div>
@@ -215,6 +227,7 @@
     <div class="game-header">
       <div class="round-info" id="roundInfo">라운드 1 / 10</div>
       <div style="display:flex;gap:0.5rem;align-items:center;">
+        <button type="button" class="btn-rules-sm" onclick="showRules()">규칙</button>
         <button onclick="showScores()" style="background:rgba(201,162,39,0.2);border:1px solid rgba(201,162,39,0.4);border-radius:6px;color:var(--gold);padding:0.18rem 0.55rem;cursor:pointer;font-size:0.78rem;">점수판</button>
         <div class="phase-badge" id="phaseBadge">입찰 단계</div>
       </div>
@@ -270,6 +283,14 @@
     <h2>📜 점수표</h2>
     <table class="score-table" id="scoreTableContent"></table>
     <button class="btn-next" onclick="closeScores()">닫기</button>
+  </div>
+</div>
+
+<div id="rulesModal" style="display:none;" class="modal-overlay" onclick="if(event.target===this)closeRules()">
+  <div class="modal-box" style="max-width:520px;">
+    <h2>📖 게임 설명</h2>
+    <div id="rulesContent"></div>
+    <button type="button" class="btn-next" onclick="closeRules()">닫기</button>
   </div>
 </div>
 
@@ -883,6 +904,71 @@ function showScores(){
 }
 
 function closeScores(){document.getElementById('scoreModal').style.display='none';}
+
+const RULES_HTML=`
+  <div class="rules-section">
+    <h3>⚓ 게임 목표</h3>
+    <p>10라운드 동안 트릭(패)을 가져와 점수를 모읍니다. <strong>최종 점수가 가장 높은 선원</strong>이 승리합니다. 2~6명이 한 기기(로컬) 또는 온라인 방에서 플레이할 수 있습니다.</p>
+  </div>
+  <div class="rules-section">
+    <h3>🌊 한 라운드 흐름</h3>
+    <ul>
+      <li>라운드 번호만큼 카드를 나눠 받습니다. (1라운드 1장 … 10라운드 10장)</li>
+      <li><strong>입찰</strong> — 이번 라운드에 가져올 트릭 수를 0~패 수 사이에서 선언합니다.</li>
+      <li><strong>플레이</strong> — 시계 방향으로 카드를 한 장씩 냅니다. 트릭 승자가 다음 트릭을 리드합니다.</li>
+      <li>라운드가 끝나면 입찰 대비 실제 획득 트릭으로 점수를 계산합니다.</li>
+    </ul>
+  </div>
+  <div class="rules-section">
+    <h3>🎯 입찰 · 점수</h3>
+    <ul>
+      <li><strong>입찰 적중</strong> (가져온 트릭 = 입찰, 입찰 ≥ 1): <strong>입찰 × 20</strong>점 + 보너스</li>
+      <li><strong>0 입찰 적중</strong> (트릭 0개): <strong>라운드 × 10</strong>점</li>
+      <li><strong>실패</strong>: 차이만큼 <strong>−10점/트릭</strong> (0 입찰 실패 시 <strong>−라운드 × 10</strong>)</li>
+    </ul>
+  </div>
+  <div class="rules-section">
+    <h3>🃏 카드 구성</h3>
+    <ul>
+      <li>🔴🔵🟡🟣 <strong>숫자 1~14</strong> (색당 14장) — ♠보라(보라)는 다른 색보다 강한 트럼프</li>
+      <li>🏳️ <strong>도주</strong> ×5 — 트릭에서 이기지 않음</li>
+      <li>🏴‍☠️ <strong>해적</strong> ×5 — 스컬킹·인어와 조합 시 보너스</li>
+      <li>🧜 <strong>인어</strong> ×2</li>
+      <li>☠️ <strong>스컬킹</strong> ×1 — 트릭에서 최우선 승리</li>
+      <li>🦑 <strong>크라켄</strong> ×1 · 🐋 <strong>흰고래</strong> ×1</li>
+    </ul>
+  </div>
+  <div class="rules-section">
+    <h3>🏆 트릭 승리 (일반)</h3>
+    <p>우선순위: <strong>스컬킹</strong> → <strong>해적</strong>(먼저 낸 장) → <strong>인어</strong> → <strong>숫자</strong>. 숫자만 있을 때는 ♠보라가 최고 숫자로 이기고, 없으면 <strong>리드한 색</strong> 중 가장 높은 숫자가 승리합니다. 리드 색을 맞추지 못하면 낸 카드로는 이길 수 없습니다.</p>
+  </div>
+  <div class="rules-section">
+    <h3>✨ 보너스 (해당 트릭)</h3>
+    <ul>
+      <li>☠️ 스컬킹 승리 + 🏴‍☠️ 해적: 해적 1장당 <strong>+30</strong></li>
+      <li>☠️ 스컬킹 승리 + 🧜 인어: <strong>+20</strong></li>
+      <li>🏴‍☠️ 해적 승리 + 🧜 인어: <strong>+20</strong></li>
+      <li>숫자 <strong>14</strong>로 승리: <strong>+10</strong></li>
+    </ul>
+  </div>
+  <div class="rules-section">
+    <h3>🦑 크라켄 · 🐋 흰고래</h3>
+    <ul>
+      <li><strong>크라켄</strong> — 모든 플레이어가 그 트릭에서 패배합니다. 크라켄을 빼고 계산했을 때 이겼을 플레이어가 다음 트릭을 리드합니다.</li>
+      <li><strong>흰고래</strong> — 모든 특수 카드가 도주로 취급되고 리드 수트가 없습니다. 숫자만 남으면 수트 무관 최고 숫자가 이기며, 같은 숫자면 <strong>먼저 낸 쪽</strong>이 승리합니다. 숫자가 없으면 전원 패배, 고래를 낸 플레이어가 다음 리드.</li>
+    </ul>
+  </div>
+  <div class="rules-section">
+    <h3>📱 로컬 플레이</h3>
+    <p>차례가 오면 기기를 넘겨받고 「패 확인하기」를 눌러 자신의 패만 본 뒤 카드를 냅니다.</p>
+  </div>`;
+
+function showRules(){
+  const el=document.getElementById('rulesContent');
+  if(el&&!el.innerHTML)el.innerHTML=RULES_HTML;
+  document.getElementById('rulesModal').style.display='flex';
+}
+function closeRules(){document.getElementById('rulesModal').style.display='none';}
 
 function showFinal(){
   showScreen('final');
