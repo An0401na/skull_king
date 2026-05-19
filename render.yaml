@@ -1,0 +1,9 @@
+# Render.com: New → Blueprint → 이 저장소 연결
+services:
+  - type: web
+    name: skull-king
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
