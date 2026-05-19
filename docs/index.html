@@ -1,18 +1,18 @@
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Pirata+One&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root { --ocean: #0a1628; --ocean-mid: #0d2040; --gold: #c9a227; --gold-light: #f0c040; --cream: #f5e6c8; }
-  body { font-family: 'Crimson Pro', serif; background: var(--ocean); color: var(--cream); min-height: 100vh; }
+  :root { --ocean: #0a1628; --ocean-mid: #0d2040; --gold: #c9a227; --gold-light: #f0c040; --cream: #f5e6c8; --font: 'Noto Sans KR', system-ui, -apple-system, sans-serif; }
+  body { font-family: var(--font); background: var(--ocean); color: var(--cream); min-height: 100vh; line-height: 1.5; letter-spacing: 0.01em; -webkit-font-smoothing: antialiased; }
   #app { min-height: 600px; }
   .screen { display: none; } .screen.active { display: block; }
 
   #lobby { text-align: center; padding: 2rem 1rem; background: linear-gradient(180deg, #0a0f1e 0%, #0a1628 40%, #0d2040 100%); min-height: 600px; }
-  .game-title { font-family: 'Pirata One', cursive; font-size: 3.2rem; color: var(--gold-light); text-shadow: 0 0 20px rgba(201,162,39,0.5); letter-spacing: 4px; margin-bottom: 0.25rem; }
-  .game-subtitle { font-style: italic; color: var(--cream); opacity: 0.7; font-size: 1.1rem; margin-bottom: 1.5rem; }
+  .game-title { font-size: 2.4rem; font-weight: 700; color: var(--gold-light); text-shadow: 0 0 20px rgba(201,162,39,0.5); letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+  .game-subtitle { color: var(--cream); opacity: 0.75; font-size: 1.05rem; margin-bottom: 1.5rem; font-weight: 400; }
 
   .lobby-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(201,162,39,0.3); border-radius: 12px; padding: 1.25rem; margin: 0.75rem auto; max-width: 420px; text-align: left; }
-  .lobby-card h3 { font-family: 'Pirata One', cursive; color: var(--gold); font-size: 1.2rem; margin-bottom: 0.75rem; text-align: center; }
+  .lobby-card h3 { color: var(--gold); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.75rem; text-align: center; }
   .card-guide { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; }
   .guide-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.3rem 0.55rem; font-size: 0.76rem; color: rgba(245,230,200,0.7); }
 
@@ -21,27 +21,27 @@
   .rule-list li strong { color: var(--gold-light); }
   .rules-section { margin-bottom: 1.1rem; }
   .rules-section:last-child { margin-bottom: 0; }
-  .rules-section h3 { font-family: 'Pirata One', cursive; color: var(--gold); font-size: 1.05rem; margin-bottom: 0.45rem; }
+  .rules-section h3 { color: var(--gold); font-size: 1.05rem; font-weight: 700; margin-bottom: 0.45rem; }
   .rules-section p, .rules-section li { font-size: 0.86rem; color: rgba(245,230,200,0.75); line-height: 1.5; }
   .rules-section ul { padding-left: 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
   .rules-section li strong { color: var(--gold-light); }
-  .btn-rules-link { font-family: 'Pirata One', cursive; background: rgba(201,162,39,0.12); border: 1px solid rgba(201,162,39,0.45); border-radius: 8px; color: var(--gold-light); padding: 0.4rem 1.1rem; cursor: pointer; font-size: 1rem; letter-spacing: 1px; margin-bottom: 1rem; transition: background 0.15s; }
+  .btn-rules-link { background: rgba(201,162,39,0.12); border: 1px solid rgba(201,162,39,0.45); border-radius: 8px; color: var(--gold-light); padding: 0.4rem 1.1rem; cursor: pointer; font-size: 1rem; letter-spacing: 1px; margin-bottom: 1rem; transition: background 0.15s; }
   .btn-rules-link:hover { background: rgba(201,162,39,0.28); }
-  .btn-rules-sm { background: rgba(201,162,39,0.15); border: 1px solid rgba(201,162,39,0.35); border-radius: 6px; color: var(--gold); padding: 0.18rem 0.55rem; cursor: pointer; font-size: 0.78rem; font-family: 'Crimson Pro', serif; }
+  .btn-rules-sm { background: rgba(201,162,39,0.15); border: 1px solid rgba(201,162,39,0.35); border-radius: 6px; color: var(--gold); padding: 0.18rem 0.55rem; cursor: pointer; font-size: 0.78rem; }
 
   .player-setup { display: flex; flex-direction: column; gap: 0.65rem; }
   .player-row { display: flex; align-items: center; gap: 0.5rem; }
-  .player-row input[type=text] { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(201,162,39,0.3); border-radius: 8px; padding: 0.45rem 0.75rem; color: var(--cream); font-family: 'Crimson Pro', serif; font-size: 1rem; outline: none; }
+  .player-row input[type=text] { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(201,162,39,0.3); border-radius: 8px; padding: 0.45rem 0.75rem; color: var(--cream); font-size: 1rem; outline: none; }
   .player-row input:focus { border-color: var(--gold); }
   .player-row .av { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
   .btn-remove { background: rgba(139,26,26,0.4); border: 1px solid rgba(139,26,26,0.6); border-radius: 6px; color: #ff6b6b; padding: 0.2rem 0.45rem; cursor: pointer; font-size: 0.8rem; }
   .btn-add { background: rgba(45,74,26,0.4); border: 1px solid rgba(45,74,26,0.6); border-radius: 8px; color: #90c060; padding: 0.45rem 1rem; cursor: pointer; font-size: 0.9rem; width: 100%; margin-top: 0.5rem; }
-  .btn-primary { font-family: 'Pirata One', cursive; background: linear-gradient(135deg, #8b6914, #c9a227); border: none; border-radius: 10px; color: #1a0e00; padding: 0.75rem 2rem; font-size: 1.4rem; cursor: pointer; letter-spacing: 2px; margin-top: 1rem; box-shadow: 0 4px 15px rgba(201,162,39,0.3); transition: transform 0.15s; }
+  .btn-primary { background: linear-gradient(135deg, #8b6914, #c9a227); border: none; border-radius: 10px; color: #1a0e00; padding: 0.75rem 2rem; font-size: 1.15rem; font-weight: 700; cursor: pointer; letter-spacing: 0.02em; margin-top: 1rem; box-shadow: 0 4px 15px rgba(201,162,39,0.3); transition: transform 0.15s; }
   .btn-primary:hover { transform: translateY(-2px); }
 
   #game { padding: 0; min-height: 600px; background: var(--ocean); }
   .game-header { background: rgba(0,0,0,0.5); border-bottom: 1px solid rgba(201,162,39,0.3); padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; }
-  .round-info { font-family: 'Pirata One', cursive; color: var(--gold); font-size: 1.1rem; }
+  .round-info { color: var(--gold); font-size: 1.05rem; font-weight: 700; }
   .phase-badge { background: rgba(201,162,39,0.2); border: 1px solid rgba(201,162,39,0.4); border-radius: 20px; padding: 0.2rem 0.75rem; font-size: 0.82rem; color: var(--gold); }
   .score-board { display: flex; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05); overflow-x: auto; }
   .score-chip { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.3rem 0.55rem; min-width: 78px; text-align: center; flex-shrink: 0; }
@@ -54,13 +54,13 @@
   .bid-tag span { color: var(--gold); font-weight: 600; }
 
   .bid-panel { background: rgba(0,0,0,0.6); border: 1px solid rgba(201,162,39,0.3); border-radius: 12px; padding: 1.2rem; margin: 1rem; text-align: center; }
-  .bid-panel h3 { font-family: 'Pirata One', cursive; color: var(--gold); font-size: 1.25rem; margin-bottom: 0.2rem; }
+  .bid-panel h3 { color: var(--gold); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.2rem; }
   .bid-panel p { font-size: 0.88rem; color: rgba(245,230,200,0.6); margin-bottom: 0.9rem; }
   .bid-buttons { display: flex; gap: 0.45rem; justify-content: center; flex-wrap: wrap; }
-  .btn-bid { background: rgba(201,162,39,0.15); border: 1px solid rgba(201,162,39,0.4); border-radius: 8px; color: var(--gold); padding: 0.45rem 0.85rem; cursor: pointer; font-size: 1rem; font-family: 'Crimson Pro', serif; transition: background 0.15s; }
+  .btn-bid { background: rgba(201,162,39,0.15); border: 1px solid rgba(201,162,39,0.4); border-radius: 8px; color: var(--gold); padding: 0.45rem 0.85rem; cursor: pointer; font-size: 1rem; transition: background 0.15s; }
   .btn-bid:hover { background: rgba(201,162,39,0.35); }
   .btn-bid.sel { background: rgba(201,162,39,0.5); border-color: var(--gold); color: #fff0a0; }
-  .btn-confirm { font-family: 'Pirata One', cursive; background: linear-gradient(135deg, #4a2a00, #8b6914); border: 1px solid var(--gold); border-radius: 8px; color: var(--gold-light); padding: 0.55rem 1.4rem; font-size: 1.05rem; cursor: pointer; margin-top: 0.7rem; letter-spacing: 1px; }
+  .btn-confirm { background: linear-gradient(135deg, #4a2a00, #8b6914); border: 1px solid var(--gold); border-radius: 8px; color: var(--gold-light); padding: 0.55rem 1.4rem; font-size: 1.05rem; cursor: pointer; margin-top: 0.7rem; letter-spacing: 1px; }
   .btn-confirm:disabled { opacity: 0.3; cursor: not-allowed; }
 
   .special-msg { margin: 0.4rem 1rem; border-radius: 10px; padding: 0.65rem 1rem; font-size: 0.88rem; text-align: center; animation: fadeIn 0.4s; }
@@ -69,27 +69,31 @@
   @keyframes fadeIn { from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);} }
 
   .trick-area { min-height: 155px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0.75rem 1rem; gap: 0.4rem; position: relative; }
-  .trick-label { font-family: 'Pirata One', cursive; color: rgba(201,162,39,0.4); font-size: 0.85rem; position: absolute; top: 0.5rem; left: 1rem; }
+  .trick-label { color: rgba(201,162,39,0.4); font-size: 0.85rem; position: absolute; top: 0.5rem; left: 1rem; }
   .played-cards { display: flex; gap: 0.65rem; justify-content: center; flex-wrap: wrap; }
-  .trick-winner-msg { font-family: 'Pirata One', cursive; color: var(--gold-light); font-size: 1.05rem; text-align: center; padding: 0.4rem; animation: fadeIn 0.5s; }
+  .trick-winner-msg { color: var(--gold-light); font-size: 1.05rem; text-align: center; padding: 0.4rem; animation: fadeIn 0.5s; }
   .play-btn-area { text-align: center; padding: 0.4rem; }
-  .btn-play-card { font-family: 'Pirata One', cursive; background: linear-gradient(135deg, #1a4a1a, #2a6a2a); border: 1px solid #4a8a4a; border-radius: 8px; color: #a0ff80; padding: 0.55rem 1.4rem; font-size: 1.05rem; cursor: pointer; letter-spacing: 1px; }
+  .btn-play-card { background: linear-gradient(135deg, #1a4a1a, #2a6a2a); border: 1px solid #4a8a4a; border-radius: 8px; color: #a0ff80; padding: 0.55rem 1.4rem; font-size: 1.05rem; cursor: pointer; letter-spacing: 1px; }
   .btn-play-card:disabled { opacity: 0.3; cursor: not-allowed; }
   .turn-cover { position: fixed; inset: 0; background: rgba(5,10,20,0.92); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 1rem; }
   .turn-cover-box { background: var(--ocean-mid); border: 1px solid rgba(201,162,39,0.45); border-radius: 16px; padding: 1.75rem 1.5rem; max-width: 360px; width: 100%; text-align: center; }
   .turn-cover-box .tc-av { font-size: 2.5rem; margin-bottom: 0.5rem; }
-  .turn-cover-box h3 { font-family: 'Pirata One', cursive; color: var(--gold-light); font-size: 1.6rem; margin-bottom: 0.35rem; }
+  .turn-cover-box h3 { color: var(--gold-light); font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; }
   .turn-cover-box p { font-size: 0.92rem; color: rgba(245,230,200,0.65); line-height: 1.45; margin-bottom: 1.1rem; }
-  .hand-hidden { text-align: center; padding: 1.5rem 1rem; color: rgba(245,230,200,0.45); font-style: italic; font-size: 0.9rem; border: 1px dashed rgba(201,162,39,0.25); border-radius: 10px; }
+  .hand-hidden { text-align: center; padding: 1.5rem 1rem; color: rgba(245,230,200,0.55); font-size: 0.92rem; border: 1px dashed rgba(201,162,39,0.25); border-radius: 10px; }
+  .played-card-wrap.last-play .card { box-shadow: 0 0 0 2px var(--gold-light), 0 6px 18px rgba(201,162,39,0.45); }
+  .played-card-wrap.last-play .pcn { color: var(--gold-light); font-weight: 600; }
+  .trick-review-cards { display: flex; gap: 0.65rem; justify-content: center; flex-wrap: wrap; margin: 0.75rem 0; }
+  .trick-review-result { font-size: 0.95rem; color: rgba(245,230,200,0.85); line-height: 1.55; margin-bottom: 0.5rem; }
 
   .card { width: 56px; height: 84px; border-radius: 7px; border: 2px solid rgba(255,255,255,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: transform 0.15s, box-shadow 0.15s; font-weight: 600; user-select: none; flex-shrink: 0; }
   .card:hover { transform: translateY(-6px); box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
   .card.selected { transform: translateY(-12px); box-shadow: 0 10px 25px rgba(201,162,39,0.6); border-color: var(--gold); }
   .card.disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
   .card.played { cursor: default; } .card.played:hover { transform: none; }
-  .card .cs { font-size: 0.6rem; opacity: 0.7; position: absolute; top: 3px; left: 4px; font-family: 'Crimson Pro', serif; font-weight: 400; }
+  .card .cs { font-size: 0.6rem; opacity: 0.7; position: absolute; top: 3px; left: 4px; font-weight: 400; }
   .card .cn { font-size: 1.25rem; }
-  .card .cname { font-size: 0.58rem; text-align: center; padding: 0 2px; line-height: 1.15; font-family: 'Crimson Pro', serif; }
+  .card .cname { font-size: 0.58rem; text-align: center; padding: 0 2px; line-height: 1.15; }
   .card.red { background: linear-gradient(145deg,#a02020,#6a1010); color:#ffd0d0; border-color:rgba(255,150,150,0.3); }
   .card.blue { background: linear-gradient(145deg,#1a4a9a,#0d2a6a); color:#c0d8ff; border-color:rgba(100,150,255,0.3); }
   .card.yellow { background: linear-gradient(145deg,#9a8a1a,#6a5a10); color:#fff0a0; border-color:rgba(255,220,80,0.3); }
@@ -110,19 +114,19 @@
 
   .modal-overlay { position: fixed; top:0;left:0;right:0;bottom:0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 100; }
   .modal-box { background: var(--ocean-mid); border: 1px solid rgba(201,162,39,0.4); border-radius: 16px; padding: 1.5rem; max-width: 460px; width: 90%; max-height: 80vh; overflow-y: auto; }
-  .modal-box h2 { font-family: 'Pirata One', cursive; color: var(--gold); font-size: 1.7rem; text-align: center; margin-bottom: 1rem; }
+  .modal-box h2 { color: var(--gold); font-size: 1.35rem; font-weight: 700; text-align: center; margin-bottom: 1rem; }
   .score-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
   .score-table th { text-align: left; color: rgba(245,230,200,0.5); font-weight: 400; font-size: 0.78rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 0.28rem 0.45rem; }
   .score-table td { padding: 0.32rem 0.45rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .pos { color:#80ff80; } .neg { color:#ff8080; } .zer { color:rgba(245,230,200,0.4); }
-  .btn-next { font-family: 'Pirata One', cursive; background: linear-gradient(135deg,#1a4a8b,#2a6abb); border: 1px solid #4a8adb; border-radius: 8px; color: #c0d8ff; padding: 0.55rem 1.4rem; font-size: 1.05rem; cursor: pointer; display: block; margin: 1rem auto 0; letter-spacing: 1px; }
+  .btn-next { background: linear-gradient(135deg,#1a4a8b,#2a6abb); border: 1px solid #4a8adb; border-radius: 8px; color: #c0d8ff; padding: 0.55rem 1.4rem; font-size: 1.05rem; cursor: pointer; display: block; margin: 1rem auto 0; letter-spacing: 1px; }
 
   #final { text-align: center; padding: 2rem 1rem; background: linear-gradient(180deg,#0a0f1e 0%,#1a0e00 100%); min-height: 600px; }
-  .winner-ann { font-family: 'Pirata One', cursive; font-size: 2rem; color: var(--gold-light); text-shadow: 0 0 20px rgba(201,162,39,0.5); margin: 1rem 0; }
+  .winner-ann { font-size: 2rem; color: var(--gold-light); text-shadow: 0 0 20px rgba(201,162,39,0.5); margin: 1rem 0; }
   .final-scores { background: rgba(255,255,255,0.05); border: 1px solid rgba(201,162,39,0.3); border-radius: 12px; padding: 1rem; max-width: 380px; margin: 1rem auto; }
   .final-rank { display: flex; align-items: center; gap: 0.75rem; padding: 0.45rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .final-rank:last-child { border-bottom: none; }
-  .rnum { font-family: 'Pirata One', cursive; font-size: 1.2rem; width: 30px; color: rgba(245,230,200,0.4); }
+  .rnum { font-size: 1.2rem; width: 30px; color: rgba(245,230,200,0.4); }
   .rnum.gold { color: var(--gold-light); }
   .rname { flex:1; text-align:left; }
   .rscore { font-weight:600; color:var(--gold); }
@@ -130,12 +134,12 @@
   .log-item { font-size: 0.76rem; color: rgba(245,230,200,0.4); font-style: italic; }
 
   .mode-tabs { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1rem; }
-  .mode-tab { font-family: 'Pirata One', cursive; background: rgba(255,255,255,0.06); border: 1px solid rgba(201,162,39,0.25); border-radius: 8px; color: rgba(245,230,200,0.6); padding: 0.45rem 1.1rem; cursor: pointer; font-size: 1rem; }
+  .mode-tab { background: rgba(255,255,255,0.06); border: 1px solid rgba(201,162,39,0.25); border-radius: 8px; color: rgba(245,230,200,0.6); padding: 0.45rem 1.1rem; cursor: pointer; font-size: 1rem; }
   .mode-tab.active { background: rgba(201,162,39,0.25); border-color: var(--gold); color: var(--gold-light); }
   .online-form { display: flex; flex-direction: column; gap: 0.65rem; }
-  .online-form input[type=text] { background: rgba(255,255,255,0.08); border: 1px solid rgba(201,162,39,0.3); border-radius: 8px; padding: 0.5rem 0.75rem; color: var(--cream); font-family: 'Crimson Pro', serif; font-size: 1rem; outline: none; width: 100%; }
+  .online-form input[type=text] { background: rgba(255,255,255,0.08); border: 1px solid rgba(201,162,39,0.3); border-radius: 8px; padding: 0.5rem 0.75rem; color: var(--cream); font-size: 1rem; outline: none; width: 100%; }
   .online-form input:focus { border-color: var(--gold); }
-  .room-code { font-family: 'Pirata One', cursive; font-size: 2.2rem; letter-spacing: 6px; color: var(--gold-light); text-align: center; margin: 0.5rem 0; }
+  .room-code { font-size: 2.2rem; letter-spacing: 6px; color: var(--gold-light); text-align: center; margin: 0.5rem 0; }
   .wait-list { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.75rem 0; }
   .wait-player { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.55rem; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 0.92rem; }
   .wait-player.off { opacity: 0.45; }
@@ -144,7 +148,7 @@
   .net-status { font-size: 0.78rem; text-align: center; margin-top: 0.5rem; color: rgba(245,230,200,0.4); }
   .net-status.ok { color: #80c080; }
   .net-status.err { color: #ff8080; }
-  .btn-secondary { font-family: 'Pirata One', cursive; background: rgba(255,255,255,0.08); border: 1px solid rgba(201,162,39,0.35); border-radius: 10px; color: var(--gold); padding: 0.6rem 1.2rem; font-size: 1.1rem; cursor: pointer; letter-spacing: 1px; }
+  .btn-secondary { background: rgba(255,255,255,0.08); border: 1px solid rgba(201,162,39,0.35); border-radius: 10px; color: var(--gold); padding: 0.6rem 1.2rem; font-size: 1.1rem; cursor: pointer; letter-spacing: 1px; }
 </style>
 
 <div id="app">
@@ -275,6 +279,16 @@
     <h3 id="turnCoverName">플레이어</h3>
     <p id="turnCoverSub">차례입니다. 기기를 넘겨받은 뒤 패를 확인하세요.</p>
     <button class="btn-primary" id="btnTurnReady" style="margin-top:0;">🃏 패 확인하기</button>
+  </div>
+</div>
+
+<div id="trickReview" class="turn-cover" style="display:none;">
+  <div class="turn-cover-box" style="max-width:420px;">
+    <h3 style="color:var(--gold-light);font-size:1.25rem;font-weight:700;margin-bottom:0.35rem;">트릭 결과</h3>
+    <p id="trickReviewLead" class="trick-review-result"></p>
+    <div id="trickReviewCards" class="trick-review-cards"></div>
+    <p id="trickReviewMsg" class="trick-review-result" style="color:var(--gold-light);font-weight:600;"></p>
+    <button type="button" class="btn-primary" id="btnTrickReview" style="margin-top:0.5rem;">결과 확인</button>
   </div>
 </div>
 
@@ -525,7 +539,7 @@ function buildDeck(){
   let d=[];
   SUITS.forEach(s=>{for(let n=1;n<=14;n++)d.push({type:'number',suit:s,n,id:s+n});});
   for(let i=0;i<5;i++)d.push({type:'escape',id:'esc'+i,n:0});
-  ['블랙베어드','앤보니','토마스','할리퀸','윌키드'].forEach((name,i)=>d.push({type:'pirate',id:'p'+i,name,n:15}));
+  for(let i=0;i<5;i++)d.push({type:'pirate',id:'p'+i,name:'해적',n:15});
   for(let i=0;i<2;i++)d.push({type:'mermaid',id:'m'+i,n:0});
   d.push({type:'skull',id:'skull',n:16});
   d.push({type:'kraken',id:'kraken',n:0});
@@ -555,15 +569,21 @@ function hideSecretView(){
   G.viewingPlayer=null;
 }
 
+function isLastInTrickOrder(pIdx){
+  return G.phase==='play'&&(G.trickLeader+G.players.length-1)%G.players.length===pIdx;
+}
 function showTurnCover(pIdx,mode,onReady){
   hideSecretView();
   const p=G.players[pIdx];
   document.getElementById('turnCoverAv').textContent=p.avatar;
   document.getElementById('turnCoverName').textContent=p.name;
+  const lastPlay=mode==='play'&&isLastInTrickOrder(pIdx);
   document.getElementById('turnCoverSub').textContent=
     mode==='bid'
       ? `${G.round}장의 패로 몇 트릭을 가져올지 입찰하세요. 다른 사람은 보지 마세요!`
-      : '카드를 낼 차례입니다. 다른 사람은 보지 마세요!';
+      : lastPlay
+        ? '마지막으로 카드를 냅니다. 내기 후 모든 카드와 트릭 결과를 확인할 수 있습니다.'
+        : '카드를 낼 차례입니다. 다른 사람은 보지 마세요!';
   const cover=document.getElementById('turnCover');
   cover.style.display='flex';
   document.getElementById('btnTurnReady').onclick=()=>{
@@ -719,7 +739,7 @@ function cardCls(card){
 
 function cardHTML(card){
   if(card.type==='number')return `<div class="cs">${SNAMES[card.suit]}</div><div class="cn">${card.n}</div>`;
-  const map={escape:'🏳️<br>도주',pirate:`🏴‍☠️<br>${card.name}`,mermaid:'🧜<br>인어',skull:'☠️<br>스컬킹',kraken:'🦑<br>크라켄',whale:'🐋<br>흰고래'};
+  const map={escape:'🏳️<br>도주',pirate:'🏴‍☠️<br>해적',mermaid:'🧜<br>인어',skull:'☠️<br>스컬킹',kraken:'🦑<br>크라켄',whale:'🐋<br>흰고래'};
   return `<div class="cname">${map[card.type]||''}</div>`;
 }
 
@@ -736,22 +756,34 @@ function playCard(pIdx,card){
   G.players[pIdx].hand=G.players[pIdx].hand.filter(c=>c.id!==card.id);
   G.currentTrick.push({pIdx,card,playOrder:G.currentTrick.length});
   G.selectedCard=null;
+  G.lastTrickPlayer=pIdx;
   hideSecretView();
+  document.getElementById('playBtnArea').style.display='none';
   renderPlayedCards();
+  if(G.currentTrick.length===G.players.length){
+    document.getElementById('handLabel').textContent='트릭이 끝났습니다. 결과를 확인하세요.';
+    showHandHidden();
+    resolveTrick();
+    return;
+  }
   showHandHidden();
   setTimeout(doNextPlay,300);
 }
 
-function renderPlayedCards(){
-  document.getElementById('playedCards').innerHTML=G.currentTrick.map(({pIdx,card})=>`
-    <div class="played-card-wrap">
+function renderTrickCardsHtml(trick,highlightPIdx){
+  return trick.map(({pIdx,card})=>`
+    <div class="played-card-wrap${highlightPIdx===pIdx?' last-play':''}">
       <div class="card played ${cardCls(card)}">${cardHTML(card)}</div>
       <div class="pcn">${G.players[pIdx].avatar} ${G.players[pIdx].name}</div>
     </div>`).join('');
 }
 
+function renderPlayedCards(){
+  document.getElementById('playedCards').innerHTML=renderTrickCardsHtml(G.currentTrick,G.lastTrickPlayer);
+}
+
 function resolveTrick(){
-  const trick=G.currentTrick;
+  const trick=[...G.currentTrick];
   const sm=document.getElementById('specialMsg');
   sm.innerHTML='';
 
@@ -770,8 +802,8 @@ function resolveTrick(){
     addLog(`트릭 ${G.trickCount+1}: 크라켄 — 전원 패배`);
     G.trickCount++; G.trickLeader=nextLeader; G.currentTrick=[];
     updateScoreBoard(); updateTrickLabel();
-    if(G.trickCount>=G.round){setTimeout(endRound,1600);return;}
-    setTimeout(()=>{sm.innerHTML='';document.getElementById('playedCards').innerHTML='';document.getElementById('trickWinnerMsg').textContent='';doNextPlay();},1600);
+    if(G.trickCount>=G.round){queueTrickReview(trick,true);return;}
+    queueTrickReview(trick,false);
     return;
   }
 
@@ -786,8 +818,8 @@ function resolveTrick(){
       addLog(`트릭 ${G.trickCount+1}: 흰고래 — 특수만 있어 전원 패배`);
       G.trickCount++; G.trickLeader=whalePIdx; G.currentTrick=[];
       updateScoreBoard(); updateTrickLabel();
-      if(G.trickCount>=G.round){setTimeout(endRound,1600);return;}
-      setTimeout(()=>{sm.innerHTML='';document.getElementById('playedCards').innerHTML='';document.getElementById('trickWinnerMsg').textContent='';doNextPlay();},1600);
+      if(G.trickCount>=G.round){queueTrickReview(trick,true);return;}
+      queueTrickReview(trick,false);
       return;
     }
     // 숫자 카드만으로 승자 결정, 리드 수트 없음, 같은 숫자면 먼저 낸 쪽
@@ -803,8 +835,8 @@ function resolveTrick(){
     addLog(`트릭 ${G.trickCount+1}: 흰고래 — ${winnerP.name} 승리`);
     G.trickCount++; G.trickLeader=winner.pIdx; G.currentTrick=[];
     updateScoreBoard(); updateTrickLabel();
-    if(G.trickCount>=G.round){setTimeout(endRound,1600);return;}
-    setTimeout(()=>{sm.innerHTML='';document.getElementById('playedCards').innerHTML='';document.getElementById('trickWinnerMsg').textContent='';doNextPlay();},1600);
+    if(G.trickCount>=G.round){queueTrickReview(trick,true);return;}
+    queueTrickReview(trick,false);
     return;
   }
 
@@ -829,10 +861,49 @@ function resolveTrick(){
   G.trickCount++; G.trickLeader=winner.pIdx; G.currentTrick=[];
   updateScoreBoard(); updateTrickLabel();
 
-  if(G.trickCount>=G.round){setTimeout(endRound,1300);}
-  else{
-    setTimeout(()=>{sm.innerHTML='';document.getElementById('trickWinnerMsg').textContent='';document.getElementById('playedCards').innerHTML='';doNextPlay();},1300);
-  }
+  queueTrickReview(trick,G.trickCount>=G.round);
+}
+
+function queueTrickReview(trickSnapshot,roundDone){
+  G.trickReviewSnapshot=trickSnapshot;
+  G.trickReviewRoundDone=roundDone;
+  document.getElementById('playedCards').innerHTML=renderTrickCardsHtml(trickSnapshot,G.lastTrickPlayer);
+  showTrickReview();
+}
+
+function showTrickReview(){
+  const trick=G.trickReviewSnapshot||[];
+  const lastP=G.lastTrickPlayer;
+  const lp=lastP!=null?G.players[lastP]:null;
+  const cardPlayed=trick.find(e=>e.pIdx===lastP);
+  document.getElementById('trickReviewLead').textContent=lp&&cardPlayed
+    ? `${lp.avatar} ${lp.name}님이 마지막으로 ${cardLabel(cardPlayed.card)}을(를) 냈습니다.`
+    : '이번 트릭에 낸 카드입니다.';
+  document.getElementById('trickReviewCards').innerHTML=renderTrickCardsHtml(trick,lastP);
+  const tw=document.getElementById('trickWinnerMsg').textContent;
+  const sm=document.getElementById('specialMsg');
+  const smEl=sm.querySelector('.special-msg');
+  document.getElementById('trickReviewMsg').textContent=tw||(smEl?smEl.textContent:sm.textContent)||'';
+  const btn=document.getElementById('btnTrickReview');
+  btn.textContent=G.trickReviewRoundDone?'라운드 결과 보기':'다음 트릭으로';
+  btn.onclick=continueAfterTrickReview;
+  document.getElementById('trickReview').style.display='flex';
+}
+
+function cardLabel(card){
+  if(card.type==='number')return `${SNAMES[card.suit]} ${card.n}`;
+  const labels={escape:'도주',pirate:'해적',mermaid:'인어',skull:'스컬킹',kraken:'크라켄',whale:'흰고래'};
+  return labels[card.type]||'카드';
+}
+
+function continueAfterTrickReview(){
+  document.getElementById('trickReview').style.display='none';
+  document.getElementById('specialMsg').innerHTML='';
+  document.getElementById('trickWinnerMsg').textContent='';
+  document.getElementById('playedCards').innerHTML='';
+  G.trickReviewSnapshot=null;
+  if(G.trickReviewRoundDone)endRound();
+  else doNextPlay();
 }
 
 function determineTrickWinner(trick,whaleMode){

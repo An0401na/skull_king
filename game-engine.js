@@ -6,9 +6,7 @@ function buildDeck() {
     for (let n = 1; n <= 14; n++) d.push({ type: 'number', suit: s, n, id: s + n });
   });
   for (let i = 0; i < 5; i++) d.push({ type: 'escape', id: 'esc' + i, n: 0 });
-  ['블랙베어드', '앤보니', '토마스', '할리퀸', '윌키드'].forEach((name, i) =>
-    d.push({ type: 'pirate', id: 'p' + i, name, n: 15 })
-  );
+  for (let i = 0; i < 5; i++) d.push({ type: 'pirate', id: 'p' + i, name: '해적', n: 15 });
   for (let i = 0; i < 2; i++) d.push({ type: 'mermaid', id: 'm' + i, n: 0 });
   d.push({ type: 'skull', id: 'skull', n: 16 });
   d.push({ type: 'kraken', id: 'kraken', n: 0 });
