@@ -1,4 +1,4 @@
-
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -190,6 +190,86 @@
   .net-status.ok { color: #80c080; }
   .net-status.err { color: #ff8080; }
   .btn-secondary { background: rgba(255,255,255,0.08); border: 1px solid rgba(201,162,39,0.35); border-radius: 10px; color: var(--gold); padding: 0.6rem 1.2rem; font-size: 1.1rem; cursor: pointer; letter-spacing: 1px; }
+
+  @media (max-width: 640px) {
+    body { min-height: 100svh; overflow-x: hidden; }
+    #app, #lobby, #game, #waitingRoom, #final { min-height: 100svh; }
+    #lobby, #waitingRoom, #final { padding: calc(0.9rem + env(safe-area-inset-top)) 0.75rem calc(1rem + env(safe-area-inset-bottom)); }
+    .game-title { font-size: 1.9rem; line-height: 1.1; }
+    .game-subtitle { font-size: 0.92rem; margin-bottom: 0.9rem; }
+    .lobby-card { max-width: none; width: 100%; padding: 0.9rem; margin: 0.6rem auto; border-radius: 10px; }
+    .card-guide { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 0.2rem; scrollbar-width: none; }
+    .card-guide::-webkit-scrollbar { display: none; }
+    .guide-item { flex: 0 0 auto; }
+    .online-form input[type=text] { min-height: 46px; font-size: 1rem; }
+    .btn-primary, .btn-secondary, .btn-confirm, .btn-play-card { width: 100%; min-height: 48px; padding: 0.7rem 1rem; font-size: 1rem; }
+
+    #game { display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
+    .game-header {
+      position: sticky; top: 0; z-index: 25;
+      align-items: flex-start; gap: 0.45rem; flex-wrap: wrap;
+      padding: calc(0.45rem + env(safe-area-inset-top)) 0.6rem 0.45rem;
+      background: rgba(5, 10, 20, 0.96); backdrop-filter: blur(10px);
+    }
+    .game-header > div:last-child { width: 100%; justify-content: space-between; gap: 0.35rem; }
+    .round-info { font-size: 0.95rem; }
+    .phase-badge { font-size: 0.74rem; padding: 0.18rem 0.55rem; white-space: nowrap; }
+    .btn-rules-sm, .game-header button { min-height: 32px; padding: 0.22rem 0.5rem; font-size: 0.74rem; }
+    .score-board {
+      position: sticky; top: 76px; z-index: 20;
+      gap: 0.4rem; padding: 0.45rem 0.6rem;
+      background: rgba(8, 14, 28, 0.96); scrollbar-width: none;
+    }
+    .score-board::-webkit-scrollbar, .bids-display::-webkit-scrollbar, .played-cards::-webkit-scrollbar, .hand-cards::-webkit-scrollbar { display: none; }
+    .score-chip { min-width: 86px; padding: 0.34rem 0.45rem; scroll-snap-align: start; }
+    .score-chip.cur { box-shadow: 0 0 0 2px rgba(240,192,64,0.28) inset; }
+    .score-chip .sn { font-size: 0.68rem; }
+    .score-chip .ss { font-size: 0.92rem; line-height: 1.1; }
+    .score-chip .sb { font-size: 0.66rem; white-space: nowrap; }
+    .bids-display { flex-wrap: nowrap; overflow-x: auto; padding: 0.35rem 0.6rem; }
+    .bid-tag { flex: 0 0 auto; font-size: 0.72rem; }
+
+    .bid-panel { margin: 0.65rem; padding: 0.9rem; }
+    .bid-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(48px, 1fr)); gap: 0.42rem; }
+    .btn-bid { min-height: 46px; padding: 0.4rem 0.2rem; font-size: 1rem; }
+    .trick-area { min-height: 118px; align-items: stretch; padding: 0.65rem 0 0.45rem; }
+    .trick-label { position: static; padding-left: 0.65rem; margin-bottom: 0.2rem; }
+    .played-cards, .trick-review-cards {
+      justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto;
+      gap: 0.45rem; padding: 0.2rem 0.65rem 0.4rem; min-height: 94px;
+      scroll-snap-type: x proximity;
+    }
+    .played-card-wrap { flex: 0 0 auto; scroll-snap-align: center; }
+    .played-card-wrap .pcn { max-width: 54px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .trick-leader-chip { margin: 0.35rem 0.65rem 0; font-size: 0.78rem; }
+    .special-msg { margin: 0.35rem 0.65rem; padding: 0.55rem 0.7rem; font-size: 0.78rem; }
+    .trick-winner-msg { font-size: 0.92rem; padding: 0.3rem 0.65rem; }
+    .play-btn-area {
+      position: sticky; bottom: 104px; z-index: 18;
+      padding: 0.45rem 0.65rem;
+      background: linear-gradient(180deg, rgba(10,22,40,0), rgba(10,22,40,0.98) 35%);
+    }
+    .hand-area {
+      margin-top: auto; position: sticky; bottom: 0; z-index: 17;
+      padding: 0.45rem 0.65rem calc(0.65rem + env(safe-area-inset-bottom));
+      background: rgba(8,14,28,0.98);
+      border-top-color: rgba(201,162,39,0.28);
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.35);
+    }
+    .hand-label { font-size: 0.72rem; margin-bottom: 0.35rem; }
+    .hand-cards { flex-wrap: nowrap; overflow-x: auto; gap: 0.42rem; padding: 0.15rem 0.2rem 0.45rem; scroll-snap-type: x proximity; }
+    .card { width: 50px; height: 76px; border-radius: 7px; scroll-snap-align: center; }
+    .card:hover { transform: none; }
+    .card.selected { transform: translateY(-8px); }
+    .card .cn { font-size: 1.1rem; }
+    .card .cname { font-size: 0.52rem; }
+    .hand-hidden { width: 100%; padding: 0.8rem; font-size: 0.82rem; }
+    .modal-box { width: calc(100% - 1.2rem); max-height: calc(100svh - 1.2rem); padding: 1rem; border-radius: 12px; }
+    .turn-cover { padding: 0.75rem; }
+    .turn-cover-box { padding: 1.2rem 1rem; border-radius: 12px; }
+    .quick-chat-dock { max-height: 34vh; }
+    body.chat-dock-on #game .hand-area { padding-bottom: calc(4.8rem + env(safe-area-inset-bottom)); }
+  }
 </style>
 
 <div id="app">
