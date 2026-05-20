@@ -756,8 +756,9 @@ function updateHeader(){
 function updateScoreBoard(){
   document.getElementById('scoreBoard').innerHTML=G.players.map((p,i)=>{
     const aiTag=p.isAi?' 🤖':'';
+    const turnIdx=G.phase==='bid'?G.currentBidder:G.phase==='play'?G.activePIdx:G.trickLeader;
     return `
-    <div class="score-chip ${G.trickLeader===i?'cur':''}">
+    <div class="score-chip ${turnIdx===i?'cur':''}">
       <div class="sn">${p.avatar} ${p.name}${aiTag}</div>
       <div class="ss">${p.score}</div>
       <div class="sb">${G.bids[i]!==undefined?`입찰:${G.bids[i]} 획득:${p.tricksWon||0}`:''}</div>
@@ -898,8 +899,8 @@ function doNextPlay(){
     document.getElementById('playBtnArea').style.display='block';
     document.getElementById('btnPlayCard').disabled=true;
     G.selectedCard=null;
-    renderHand(G.players[pIdx],true);
     renderPlayedCards();
+    renderHand(G.players[pIdx],true);
   });
 }
 
@@ -910,6 +911,7 @@ function showHandHidden(){
 }
 
 function renderHand(p,interactive){
+  if(G.phase==='play')renderPlayedCards();
   if(G.online){
     const pi=G.players.indexOf(p);
     if(!isMyTurn()||pi!==G.myIdx){showHandHidden();return;}
