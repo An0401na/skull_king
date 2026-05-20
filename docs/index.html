@@ -31,8 +31,10 @@
 
   .player-setup { display: flex; flex-direction: column; gap: 0.65rem; }
   .player-row { display: flex; align-items: center; gap: 0.5rem; }
-  .player-row input[type=text] { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(201,162,39,0.3); border-radius: 8px; padding: 0.45rem 0.75rem; color: var(--cream); font-size: 1rem; outline: none; }
+  .player-row input[type=text] { flex: 1; min-width: 0; background: rgba(255,255,255,0.08); border: 1px solid rgba(201,162,39,0.3); border-radius: 8px; padding: 0.45rem 0.75rem; color: var(--cream); font-size: 1rem; outline: none; }
   .player-row input:focus { border-color: var(--gold); }
+  .player-row .ai-label { display: flex; align-items: center; gap: 0.2rem; font-size: 0.78rem; color: rgba(245,230,200,0.55); white-space: nowrap; cursor: pointer; user-select: none; }
+  .player-row .ai-label input { accent-color: var(--gold); cursor: pointer; }
   .player-row .av { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
   .btn-remove { background: rgba(139,26,26,0.4); border: 1px solid rgba(139,26,26,0.6); border-radius: 6px; color: #ff6b6b; padding: 0.2rem 0.45rem; cursor: pointer; font-size: 0.8rem; }
   .btn-add { background: rgba(45,74,26,0.4); border: 1px solid rgba(45,74,26,0.6); border-radius: 8px; color: #90c060; padding: 0.45rem 1rem; cursor: pointer; font-size: 0.9rem; width: 100%; margin-top: 0.5rem; }
@@ -231,7 +233,7 @@
 
     <div class="lobby-card">
       <h3>⚓ 선원 모집</h3>
-      <p style="font-size:0.82rem;color:rgba(245,230,200,0.55);margin-bottom:0.65rem;text-align:center;">같은 화면을 돌려가며 플레이합니다. 차례가 오면 기기를 넘겨받고 「패 확인하기」를 누르세요.</p>
+      <p style="font-size:0.82rem;color:rgba(245,230,200,0.55);margin-bottom:0.65rem;text-align:center;">같은 화면을 돌려가며 플레이합니다. <strong style="color:var(--gold-light);">🤖 AI</strong>로 체크하면 자동으로 입찰·플레이합니다. 사람 선원은 차례에 「패 확인하기」를 누르세요.</p>
       <div class="player-setup" id="playerSetup"></div>
       <button class="btn-add" id="btnAddPlayer" onclick="addPlayer()">+ 선원 추가 (최대 6명)</button>
     </div>
@@ -250,7 +252,7 @@
         <button class="btn-secondary" onclick="joinOnlineRoom()" style="margin-top:0.5rem;width:100%;">⚓ 코드로 참가</button>
         <p class="net-status" id="netStatus">서버에 연결 중...</p>
       </div>
-      <p style="font-size:0.78rem;color:rgba(245,230,200,0.35);margin-top:0.5rem;">친구에게 방 코드를 공유하세요 · 2~6명</p>
+      <p style="font-size:0.78rem;color:rgba(245,230,200,0.35);margin-top:0.5rem;">친구에게 방 코드를 공유하세요 · 방장은 🤖 AI 선원을 끼워 2명 이상으로 맞출 수 있습니다 · 2~6명</p>
     </div>
   </div>
 
@@ -262,9 +264,11 @@
       <div class="room-code" id="displayRoomCode">----</div>
       <p style="text-align:center;font-size:0.82rem;color:rgba(245,230,200,0.5);">이 코드를 친구에게 알려주세요</p>
       <div class="wait-list" id="waitPlayerList"></div>
+      <button type="button" class="btn-secondary" id="btnAddAiBot" onclick="addOnlineAi()" style="display:none;width:100%;margin-top:0.5rem;">🤖 AI 선원 추가</button>
       <button class="btn-primary" id="btnStartOnline" onclick="startOnlineGame()" style="display:none;">⛵ 항해 시작 (방장)</button>
       <p class="wait-msg" id="waitHint">플레이어를 기다리는 중...</p>
       <button type="button" class="btn-secondary" onclick="showRules()" style="margin-top:0.75rem;width:100%;">📖 게임 설명</button>
+      <button type="button" class="btn-secondary" onclick="openChat()" style="margin-top:0.5rem;width:100%;">💬 채팅</button>
       <button class="btn-secondary" onclick="leaveRoom()" style="margin-top:1rem;">나가기</button>
     </div>
   </div>
@@ -275,6 +279,7 @@
       <div style="display:flex;gap:0.5rem;align-items:center;">
         <button type="button" class="btn-rules-sm" onclick="showRules()">규칙</button>
         <button onclick="showScores()" style="background:rgba(201,162,39,0.2);border:1px solid rgba(201,162,39,0.4);border-radius:6px;color:var(--gold);padding:0.18rem 0.55rem;cursor:pointer;font-size:0.78rem;">점수판</button>
+        <button type="button" class="btn-rules-sm" onclick="openChat()">💬 채팅</button>
         <div class="phase-badge" id="phaseBadge">입찰 단계</div>
       </div>
     </div>
@@ -360,7 +365,17 @@
   </div>
 </div>
 
+<div id="chatModal" style="display:none;" class="modal-overlay" onclick="if(event.target===this)closeChat()">
+  <div class="modal-box" style="max-width:520px;">
+    <h2>💬 채팅</h2>
+    <div class="quick-chat-log" id="quickChatLogModal" style="max-height:9rem;"></div>
+    <div class="quick-chat-phrases" id="quickChatPhrasesModal" style="max-height:40vh;"></div>
+    <button type="button" class="btn-next" onclick="closeChat()">닫기</button>
+  </div>
+</div>
+
 <script src="trick-rules.js"></script>
+<script src="ai-player.js"></script>
 <script src="config.js"></script>
 <script>
 const SUITS=['red','blue','yellow','black'];
@@ -466,10 +481,12 @@ function applyRoomState(room){
   const isHost=room.hostId===NET.playerId;
   document.getElementById('waitPlayerList').innerHTML=room.players.map(p=>`
     <div class="wait-player ${p.connected?'':'off'}">
-      <span>${p.avatar} ${p.name}${p.id===room.hostId?' 👑':''}</span>
-      <span class="conn-badge">${p.connected?'접속':'오프라인'}</span>
+      <span>${p.avatar} ${p.name}${p.isAi?' 🤖':''}${p.id===room.hostId?' 👑':''}</span>
+      <span class="conn-badge">${p.isAi?'AI':(p.connected?'접속':'오프라인')}</span>
     </div>`).join('');
   document.getElementById('btnStartOnline').style.display=isHost&&room.status==='lobby'?'inline-block':'none';
+  const addAi=document.getElementById('btnAddAiBot');
+  if(addAi)addAi.style.display=isHost&&room.status==='lobby'?'block':'none';
   document.getElementById('waitHint').textContent=
     room.status==='lobby'
       ?(isHost?`플레이어 ${room.players.length}/6 · 시작하려면 항해 시작을 누르세요`:'방장이 게임을 시작할 때까지 기다리세요')
@@ -478,6 +495,8 @@ function applyRoomState(room){
 }
 
 function startOnlineGame(){sendNet('start_game');}
+
+function addOnlineAi(){sendNet('add_ai',{});}
 
 function leaveRoom(){
   NET.roomCode=null;NET.quickChatRoom=null;NET.quickChatBuf=[];renderQuickChatLog();syncQuickChatDock();
@@ -507,7 +526,7 @@ function applyOnlineGame(state,hand,myIdx){
   G.roundSummary=state.roundSummary||null;
   G.players=state.players.map((p,i)=>({
     name:p.name,avatar:p.avatar,color:p.color,score:p.score,roundScores:p.roundScores||[],
-    tricksWon:p.tricksWon,bonusPoints:p.bonusPoints,
+    tricksWon:p.tricksWon,bonusPoints:p.bonusPoints,isAi:!!p.isAi,
     hand:i===myIdx?(hand||[]):[],
     handCount:p.handCount,
   }));
@@ -550,7 +569,7 @@ function renderOnlineUI(){
     else{
       const p=G.players[G.currentBidder];
       document.getElementById('bidTitle').textContent=`🎯 ${p.avatar} ${p.name} 입찰 중`;
-      document.getElementById('bidSubtitle').textContent='다른 플레이어 차례입니다...';
+      document.getElementById('bidSubtitle').textContent=p.isAi?'🤖 AI가 입찰 중…':'다른 플레이어 차례입니다...';
       document.getElementById('bidButtons').innerHTML='';
       document.getElementById('btnConfirmBid').disabled=true;
       showHandHidden();
@@ -570,7 +589,7 @@ function renderOnlineUI(){
       document.getElementById('playBtnArea').style.display='none';
       const exp=(G.trickLeader+G.currentTrick.length)%G.players.length;
       const p=G.players[exp];
-      document.getElementById('handLabel').textContent=`${p.avatar} ${p.name} 차례`;
+      document.getElementById('handLabel').textContent=`${p.avatar} ${p.name}${p.isAi?' · 🤖':''} 차례`;
       showHandHidden();
     }
   }else if(G.phase==='round_end'){
@@ -644,10 +663,14 @@ function isSpecial(c){return ['escape','pirate','mermaid','skull','kraken','whal
 
 function startGame(){
   if(G.online)return;
-  const rows=document.querySelectorAll('.player-row input');
+  const rows=document.querySelectorAll('.player-row');
   G.players=[];
-  rows.forEach((inp,i)=>{
-    if(inp.value.trim()) G.players.push({name:inp.value.trim(),score:0,avatar:AVATARS[i],color:PCOLORS[i],roundScores:[]});
+  rows.forEach((row,i)=>{
+    const inp=row.querySelector('input[type=text]');
+    const aiCb=row.querySelector('.player-ai-cb');
+    const nm=(inp&&inp.value||'').trim();
+    if(!nm)return;
+    G.players.push({name:nm,score:0,avatar:AVATARS[i],color:PCOLORS[i],roundScores:[],isAi:!!(aiCb&&aiCb.checked)});
   });
   if(G.players.length<2){alert('최소 2명!');return;}
   G.totalRounds=10; G.round=1; G.roundHistory=[];
@@ -696,10 +719,9 @@ function pushQuickChatLine(av,name,text){
   renderQuickChatLog();
 }
 function renderQuickChatLog(){
-  const log=document.getElementById('quickChatLog');
-  if(!log)return;
-  log.innerHTML=NET.quickChatBuf.map(e=>`<div class="qc-line"><span class="qc-who">${escapeHtml(e.av)} ${escapeHtml(e.name)}</span><span class="qc-txt">${escapeHtml(e.text)}</span></div>`).join('');
-  log.scrollTop=log.scrollHeight;
+  const html=NET.quickChatBuf.map(e=>`<div class="qc-line"><span class="qc-who">${escapeHtml(e.av)} ${escapeHtml(e.name)}</span><span class="qc-txt">${escapeHtml(e.text)}</span></div>`).join('');
+  const logs=[document.getElementById('quickChatLog'),document.getElementById('quickChatLogModal')].filter(Boolean);
+  logs.forEach((log)=>{log.innerHTML=html;log.scrollTop=log.scrollHeight;});
 }
 function syncQuickChatDock(){
   const dock=document.getElementById('quickChatDock');
@@ -719,6 +741,13 @@ function toggleQuickChatPhrases(){
   dock.classList.toggle('collapsed-phrases',!NET.quickChatPhrasesOpen);
   btn.textContent=NET.quickChatPhrasesOpen?'문구 접기':'문구 펼치기';
 }
+function openChat(){
+  const modal=document.getElementById('chatModal');
+  if(!modal)return;
+  modal.style.display='flex';
+  renderQuickChatLog();
+}
+function closeChat(){const m=document.getElementById('chatModal');if(m)m.style.display='none';}
 function sendQuickChat(text){
   if(!QUICK_CHAT_PHRASES.includes(text))return;
   if(!NET.roomCode||!NET.ws||NET.ws.readyState!==1){alert('온라인 방에 있을 때만 퀵채팅을 쓸 수 있습니다.');return;}
@@ -726,12 +755,14 @@ function sendQuickChat(text){
 }
 function initQuickChatUi(){
   const wrap=document.getElementById('quickChatPhrases');
+  const wrapModal=document.getElementById('quickChatPhrasesModal');
   if(!wrap||wrap.children.length)return;
   QUICK_CHAT_PHRASES.forEach((t)=>{
     const b=document.createElement('button');
     b.type='button';b.className='btn-quick-chat';b.textContent=t;
     b.onclick=()=>sendQuickChat(t);
     wrap.appendChild(b);
+    if(wrapModal){const bm=b.cloneNode(true);bm.onclick=()=>sendQuickChat(t);wrapModal.appendChild(bm);}
   });
 }
 
@@ -752,12 +783,27 @@ function updateHeader(){
 }
 
 function updateScoreBoard(){
-  document.getElementById('scoreBoard').innerHTML=G.players.map((p,i)=>`
+  document.getElementById('scoreBoard').innerHTML=G.players.map((p,i)=>{
+    const aiTag=p.isAi?' 🤖':'';
+    return `
     <div class="score-chip ${G.trickLeader===i?'cur':''}">
-      <div class="sn">${p.avatar} ${p.name}</div>
+      <div class="sn">${p.avatar} ${p.name}${aiTag}</div>
       <div class="ss">${p.score}</div>
       <div class="sb">${G.bids[i]!==undefined?`입찰:${G.bids[i]} 획득:${p.tricksWon||0}`:''}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+function makeLocalAiGameStub(){
+  return {
+    round:G.round,
+    trickCount:G.trickCount,
+    trickLeader:G.trickLeader,
+    currentTrick:G.currentTrick||[],
+    bids:G.bids||{},
+    currentBidder:G.currentBidder,
+    players:G.players.map(p=>({hand:p.hand||[],tricksWon:p.tricksWon||0})),
+  };
 }
 
 function showBidPanel(){
@@ -773,6 +819,21 @@ function doNextBid(){
   if(G.currentBidder>=G.players.length){startPlayPhase();return;}
   const idx=G.currentBidder;
   G.activePIdx=idx;
+  if(G.players[idx].isAi){
+    document.getElementById('bidPanel').style.display='block';
+    const p=G.players[idx];
+    document.getElementById('bidTitle').textContent=`🎯 ${p.avatar} ${p.name} 입찰 중…`;
+    document.getElementById('bidSubtitle').textContent='🤖 AI가 생각하는 중…';
+    document.getElementById('bidButtons').innerHTML='';
+    document.getElementById('btnConfirmBid').disabled=true;
+    showHandHidden();
+    setTimeout(()=>{
+      const stub=makeLocalAiGameStub();
+      const v=SkullKingAi.aiChooseBid(stub,idx);
+      submitLocalBid(v);
+    },400);
+    return;
+  }
   document.getElementById('bidPanel').style.display='none';
   showTurnCover(idx,'bid',()=>{
     document.getElementById('bidPanel').style.display='block';
@@ -803,13 +864,19 @@ function setBidSel(n){
 function confirmBid(){
   if(G.selectedBid===undefined)return;
   if(G.online){sendNet('bid',{value:G.selectedBid});return;}
-  G.bids[G.currentBidder]=G.selectedBid; G.currentBidder++;
-  document.getElementById('bidsDisplay').innerHTML=Object.entries(G.bids).map(([i,b])=>`
-    <div class="bid-tag">${G.players[i].avatar} ${G.players[i].name}: <span>${b}</span></div>`).join('');
+  submitLocalBid(G.selectedBid);
+}
+
+function submitLocalBid(val){
+  const i=G.currentBidder;
+  G.bids[i]=val;
+  G.currentBidder++;
+  document.getElementById('bidsDisplay').innerHTML=Object.entries(G.bids).map(([j,b])=>`
+    <div class="bid-tag">${G.players[j].avatar} ${G.players[j].name}: <span>${b}</span></div>`).join('');
   hideSecretView();
   updateScoreBoard();
   showHandHidden();
-  setTimeout(doNextBid,200);
+  setTimeout(doNextBid,220);
 }
 
 function startPlayPhase(){
@@ -831,6 +898,17 @@ function doNextPlay(){
   G.activePIdx=pIdx;
   document.getElementById('playBtnArea').style.display='none';
   renderPlayedCards();
+  if(G.players[pIdx].isAi){
+    showHandHidden();
+    document.getElementById('handLabel').textContent=`${G.players[pIdx].avatar} ${G.players[pIdx].name} · 🤖 생각 중…`;
+    setTimeout(()=>{
+      const stub=makeLocalAiGameStub();
+      const cid=SkullKingAi.aiChooseCard(stub,pIdx);
+      const card=G.players[pIdx].hand.find(c=>c.id===cid)||G.players[pIdx].hand[0];
+      playCard(pIdx,card);
+    },420);
+    return;
+  }
   showHandHidden();
   showTurnCover(pIdx,'play',()=>{
     document.getElementById('playBtnArea').style.display='block';
@@ -1150,6 +1228,7 @@ function addPlayer(){
   const row=document.createElement('div');row.className='player-row';
   row.innerHTML=`<div class="av" style="background:${PCOLORS[count]}22;font-size:1rem;">${AVATARS[count]}</div>
     <input type="text" value="${names[count]}" placeholder="이름">
+    <label class="ai-label" title="자동 입찰·플레이"><input type="checkbox" class="player-ai-cb">🤖</label>
     ${count>1?`<button class="btn-remove" onclick="this.parentElement.remove()">✕</button>`:''}`;
   setup.appendChild(row);
   if(count>=5)document.getElementById('btnAddPlayer').style.display='none';

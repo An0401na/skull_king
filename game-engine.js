@@ -32,13 +32,14 @@ function snapshotTrick(trick) {
   }));
 }
 
-function createPlayer(id, name, slot) {
+function createPlayer(id, name, slot, opts = {}) {
   const AVATARS = ['🦜', '🐙', '🦈', '🐚', '⚓', '🐠'];
   const PCOLORS = ['#c94040', '#4070c9', '#c9a020', '#9040c9', '#40a960', '#c96040'];
   return {
     id,
     name,
     slot,
+    isAi: !!opts.isAi,
     avatar: AVATARS[slot],
     color: PCOLORS[slot],
     score: 0,
@@ -74,6 +75,7 @@ function publicPlayer(p, idx, game) {
     id: p.id,
     name: p.name,
     slot: idx,
+    isAi: !!p.isAi,
     avatar: p.avatar,
     color: p.color,
     score: p.score,

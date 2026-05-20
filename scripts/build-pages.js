@@ -13,6 +13,7 @@ if (!fs.existsSync(src)) {
 fs.mkdirSync(docsDir, { recursive: true });
 fs.copyFileSync(src, path.join(docsDir, 'index.html'));
 fs.copyFileSync(path.join(root, 'trick-rules.js'), path.join(docsDir, 'trick-rules.js'));
+fs.copyFileSync(path.join(root, 'ai-player.js'), path.join(docsDir, 'ai-player.js'));
 fs.writeFileSync(path.join(docsDir, '.nojekyll'), '');
 
 const ws =

@@ -12,6 +12,7 @@ const {
   applyPlay,
   advanceRound,
 } = require('./game-engine');
+const { aiChooseBid, aiChooseCard } = require('./ai-player');
 
 const PORT = process.env.PORT || 3000;
 
@@ -80,7 +81,8 @@ function publicRoom(room) {
       name: p.name,
       slot: p.slot,
       avatar: p.avatar,
-      connected: connections.has(p.id),
+      isAi: !!p.isAi,
+      connected: p.isAi ? true : connections.has(p.id),
     })),
     game: room.game ? publicState(room.game) : null,
   };
@@ -118,6 +120,41 @@ function sendGameState(room) {
       myIdx: idx,
     });
   });
+}
+
+function scheduleAiTurns(room) {
+  if (!room.game) return;
+  if (room._aiTimer) clearTimeout(room._aiTimer);
+  room._aiTimer = setTimeout(() => {
+    room._aiTimer = null;
+    runAiTurnChain(room);
+  }, 340);
+}
+
+function runAiTurnChain(room) {
+  if (!room.game) return;
+  const g = room.game;
+
+  if (g.phase === 'bid') {
+    const p = g.players[g.currentBidder];
+    if (!p.isAi) return;
+    const v = aiChooseBid(g, g.currentBidder);
+    applyBid(g, g.currentBidder, v);
+    sendGameState(room);
+    scheduleAiTurns(room);
+    return;
+  }
+
+  if (g.phase === 'play') {
+    const exp = (g.trickLeader + g.currentTrick.length) % g.players.length;
+    const p = g.players[exp];
+    if (!p.isAi) return;
+    const cid = aiChooseCard(g, exp);
+    if (cid == null) return;
+    applyPlay(g, exp, cid);
+    sendGameState(room);
+    scheduleAiTurns(room);
+  }
 }
 
 function syncRoom(room) {
@@ -225,6 +262,26 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.type === 'add_ai') {
+      if (room.hostId !== playerId) {
+        send(ws, { type: 'error', message: '방장만 AI 선원을 추가할 수 있습니다.' });
+        return;
+      }
+      if (room.status !== 'lobby') {
+        send(ws, { type: 'error', message: '대기실에서만 추가할 수 있습니다.' });
+        return;
+      }
+      if (room.players.length >= 6) {
+        send(ws, { type: 'error', message: '방이 가득 찼습니다.' });
+        return;
+      }
+      const slot = room.players.length;
+      const botId = 'bot_' + crypto.randomBytes(6).toString('hex');
+      room.players.push(createPlayer(botId, `AI 선원 ${slot + 1}`, slot, { isAi: true }));
+      syncRoom(room);
+      return;
+    }
+
     if (msg.type === 'quick_chat') {
       const text = String(msg.text ?? '').trim();
       if (!ALLOWED_QUICK_CHAT.has(text)) return;
@@ -255,6 +312,7 @@ wss.on('connection', (ws) => {
       room.game = createGameState(room.players);
       startRound(room.game);
       syncRoom(room);
+      scheduleAiTurns(room);
       return;
     }
 
@@ -267,6 +325,7 @@ wss.on('connection', (ws) => {
         return;
       }
       sendGameState(room);
+      scheduleAiTurns(room);
       return;
     }
 
@@ -277,6 +336,7 @@ wss.on('connection', (ws) => {
         return;
       }
       sendGameState(room);
+      scheduleAiTurns(room);
       return;
     }
 
@@ -288,6 +348,7 @@ wss.on('connection', (ws) => {
       }
       if (r.finished) room.status = 'finished';
       syncRoom(room);
+      scheduleAiTurns(room);
       return;
     }
   });
@@ -299,7 +360,7 @@ wss.on('connection', (ws) => {
     const room = rooms.get(code);
     if (!room) return;
     syncRoom(room);
-    if (room.players.every((p) => !connections.has(p.id))) {
+    if (room.players.every((p) => p.isAi || !connections.has(p.id))) {
       rooms.delete(code);
     }
   });
