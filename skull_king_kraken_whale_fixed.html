@@ -177,9 +177,6 @@
   }
   .btn-quick-chat:hover { background: rgba(201, 162, 39, 0.2); border-color: rgba(201, 162, 39, 0.5); color: var(--gold-light); }
 
-  .mode-tabs { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1rem; }
-  .mode-tab { background: rgba(255,255,255,0.06); border: 1px solid rgba(201,162,39,0.25); border-radius: 8px; color: rgba(245,230,200,0.6); padding: 0.45rem 1.1rem; cursor: pointer; font-size: 1rem; }
-  .mode-tab.active { background: rgba(201,162,39,0.25); border-color: var(--gold); color: var(--gold-light); }
   .online-form { display: flex; flex-direction: column; gap: 0.65rem; }
   .online-form input[type=text] { background: rgba(255,255,255,0.08); border: 1px solid rgba(201,162,39,0.3); border-radius: 8px; padding: 0.5rem 0.75rem; color: var(--cream); font-size: 1rem; outline: none; width: 100%; }
   .online-form input:focus { border-color: var(--gold); }
@@ -203,13 +200,6 @@
 
     <button type="button" class="btn-rules-link" onclick="showRules()">📖 게임 설명</button>
 
-    <p id="pagesNote" style="display:none;font-size:0.82rem;color:rgba(245,230,200,0.5);margin-bottom:0.75rem;">GitHub Pages — <strong style="color:var(--gold-light);">로컬</strong> 플레이 · 온라인은 서버 배포 후 config.js 설정</p>
-    <div class="mode-tabs">
-      <button class="mode-tab active" id="tabLocal" onclick="setLobbyMode('local')">📱 로컬</button>
-      <button class="mode-tab" id="tabOnline" onclick="setLobbyMode('online')">🌐 온라인</button>
-    </div>
-
-    <div id="localLobby">
     <div class="lobby-card">
       <h3>🃏 카드 구성</h3>
       <div class="card-guide">
@@ -231,17 +221,7 @@
       </ul>
     </div>
 
-    <div class="lobby-card">
-      <h3>⚓ 선원 모집</h3>
-      <p style="font-size:0.82rem;color:rgba(245,230,200,0.55);margin-bottom:0.65rem;text-align:center;">같은 화면을 돌려가며 플레이합니다. <strong style="color:var(--gold-light);">🤖 AI</strong>로 체크하면 자동으로 입찰·플레이합니다. 사람 선원은 차례에 「패 확인하기」를 누르세요.</p>
-      <div class="player-setup" id="playerSetup"></div>
-      <button class="btn-add" id="btnAddPlayer" onclick="addPlayer()">+ 선원 추가 (최대 6명)</button>
-    </div>
-    <button class="btn-primary" onclick="startGame()">⛵ 항해 시작!</button>
-    <div style="margin-top:0.75rem;font-size:0.78rem;color:rgba(245,230,200,0.3);">2~6명 · 한 기기에서 번갈아 플레이</div>
-    </div>
-
-    <div id="onlineLobby" style="display:none;">
+    <div id="onlineLobby">
       <div class="lobby-card">
         <h3>🌐 온라인 방</h3>
         <div class="online-form">
@@ -411,7 +391,7 @@ function setNetStatus(msg,ok){
 
 function connectNet(cb){
   const url=wsUrl();
-  if(!url){setNetStatus('이 페이지에서는 온라인을 쓸 수 없습니다. 로컬 탭을 이용하세요.',false);return;}
+  if(!url){setNetStatus('온라인 서버 주소가 설정되지 않았습니다. config.js에 WebSocket 주소를 넣어 주세요.',false);return;}
   if(NET.ws&&NET.ws.readyState===1&&NET.playerId){cb&&cb();return;}
   if(NET.ws&&NET.ws.readyState===0){NET.pendingCb=cb;return;}
   setNetStatus('서버에 연결 중...');
@@ -444,21 +424,10 @@ function handleNetMessage(msg){
 }
 
 function setLobbyMode(mode){
-  if(mode==='online'&&!canUseOnline()){alert('GitHub Pages에서는 로컬 플레이를 이용해 주세요.\n온라인은 Node 서버를 별도 배포한 뒤 config.js에 WebSocket 주소를 넣으면 됩니다.');mode='local';}
-  document.getElementById('tabLocal').classList.toggle('active',mode==='local');
-  document.getElementById('tabOnline').classList.toggle('active',mode==='online');
-  document.getElementById('localLobby').style.display=mode==='local'?'block':'none';
-  document.getElementById('onlineLobby').style.display=mode==='online'?'block':'none';
   if(mode==='online'&&!NET.connected)connectNet();
 }
 function initPagesUi(){
-  if(!canUseOnline()){
-    const tab=document.getElementById('tabOnline');
-    if(tab)tab.style.display='none';
-    const note=document.getElementById('pagesNote');
-    if(note&&isStaticHost())note.style.display='block';
-    setLobbyMode('local');
-  }
+  setLobbyMode('online');
 }
 
 function onlineName(){return(document.getElementById('onlineName').value||'').trim()||'선원';}
@@ -1195,7 +1164,7 @@ function closeScores(){document.getElementById('scoreModal').style.display='none
 
 const RULES_HTML=`
   <div class="rules-section"><h3>⚓ 게임 목표</h3><p>10라운드 동안 트릭(패)을 가져와 점수를 모읍니다. <strong>최종 점수가 가장 높은 선원</strong>이 승리합니다.</p></div>
-  <div class="rules-section"><h3>🌊 진행</h3><ul><li>라운드마다 패를 라운드 수만큼 받습니다.</li><li>입찰 후 리드부터 시계 방향으로 카드를 냅니다.</li><li>카드를 낼 때마다 <strong>우승 후보</strong>가 표시됩니다.</li><li>마지막 플레이어가 낸 뒤 <strong>트릭 결과</strong>를 확인하고 진행합니다 (온라인·로컬 공통).</li></ul></div>
+  <div class="rules-section"><h3>🌊 진행</h3><ul><li>라운드마다 패를 라운드 수만큼 받습니다.</li><li>입찰 후 리드부터 시계 방향으로 카드를 냅니다.</li><li>카드를 낼 때마다 <strong>우승 후보</strong>가 표시됩니다.</li><li>마지막 플레이어가 낸 뒤 <strong>트릭 결과</strong>를 확인하고 진행합니다.</li></ul></div>
   <div class="rules-section"><h3>🎯 입찰·점수</h3><ul><li>입찰 적중: 입찰×20+보너스</li><li>0 입찰 적중: 라운드×10</li><li>실패: 차이×−10</li></ul></div>
   <div class="rules-section"><h3>🃏 숫자 카드</h3><ul><li>🔴🔵🟡⬛ 각 1~14</li><li><strong>검정</strong>은 다른 색보다 강한 트럼프</li><li>숫자만 있을 때 검정 최고 숫자, 없으면 리드 색 최고 숫자</li></ul></div>
   <div class="rules-section"><h3>🏳️ 탈출</h3><p>탈출을 낸 플레이어는 그 트릭에서 이기지 못합니다. <strong>모두 탈출</strong>만 낸 경우 <strong>가장 먼저</strong> 낸 사람이 승리합니다.</p></div>
@@ -1247,7 +1216,6 @@ function addPlayer(){
   setup.appendChild(row);
   if(count>=5)document.getElementById('btnAddPlayer').style.display='none';
 }
-addPlayer();addPlayer();addPlayer();
 initQuickChatUi();
 initPagesUi();
 </script>
