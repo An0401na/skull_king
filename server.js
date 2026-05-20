@@ -14,6 +14,32 @@ const {
 } = require('./game-engine');
 
 const PORT = process.env.PORT || 3000;
+
+/** 온라인 퀵채팅 — 클라이언트와 동일 목록만 허용 */
+const ALLOWED_QUICK_CHAT = new Set([
+  '스겜',
+  '풉킼',
+  '쫄?',
+  'ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ',
+  '한판더?',
+  '장난장난ㅋ',
+  '헐',
+  '나이스',
+  '미안!',
+  '잠시만',
+  '화이팅!',
+  '억까;;;',
+  '개빡집중',
+  '어?',
+  '이게되네',
+  '레전드',
+  '살려줘',
+  '냠',
+  'EZ',
+  'ㅎㅇ',
+  '방가방가'
+]);
+
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
@@ -196,6 +222,23 @@ wss.on('connection', (ws) => {
       const name = (msg.name || '').trim().slice(0, 20);
       if (name) room.players[idx].name = name;
       syncRoom(room);
+      return;
+    }
+
+    if (msg.type === 'quick_chat') {
+      const text = String(msg.text ?? '').trim();
+      if (!ALLOWED_QUICK_CHAT.has(text)) return;
+      const from = room.players[idx];
+      const payload = {
+        type: 'quick_chat',
+        fromName: from.name,
+        fromAvatar: from.avatar,
+        text,
+      };
+      room.players.forEach((p) => {
+        const pWs = connections.get(p.id);
+        if (pWs) send(pWs, payload);
+      });
       return;
     }
 

@@ -137,6 +137,44 @@
   .log-area { padding: 0.4rem 1rem; }
   .log-item { font-size: 0.76rem; color: rgba(245,230,200,0.4); font-style: italic; }
 
+  body.chat-dock-on #game .hand-area { padding-bottom: 5.5rem; }
+  .quick-chat-dock {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    display: none; flex-direction: column;
+    background: rgba(8, 14, 28, 0.97);
+    border-top: 1px solid rgba(201, 162, 39, 0.4);
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.45);
+    max-height: 42vh;
+  }
+  .quick-chat-dock-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.35rem 0.65rem 0.2rem;
+    font-size: 0.78rem; color: rgba(245, 230, 200, 0.55);
+  }
+  .quick-chat-dock-head strong { color: var(--gold-light); font-weight: 600; }
+  .btn-chat-toggle {
+    background: rgba(201, 162, 39, 0.15); border: 1px solid rgba(201, 162, 39, 0.35);
+    border-radius: 6px; color: var(--gold); padding: 0.2rem 0.55rem; cursor: pointer; font-size: 0.76rem;
+  }
+  .quick-chat-dock.collapsed-phrases .quick-chat-phrases { display: none; }
+  .quick-chat-log {
+    max-height: 4.2rem; overflow-y: auto; padding: 0.2rem 0.65rem 0.35rem;
+    font-size: 0.78rem; line-height: 1.35; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .qc-line { margin-bottom: 0.15rem; color: rgba(245, 230, 200, 0.75); }
+  .qc-line .qc-who { color: rgba(201, 162, 39, 0.85); font-weight: 500; margin-right: 0.25rem; }
+  .qc-line .qc-txt { color: rgba(245, 230, 200, 0.92); }
+  .quick-chat-phrases {
+    display: flex; flex-wrap: wrap; gap: 0.32rem; padding: 0.4rem 0.65rem 0.55rem;
+    overflow-y: auto; max-height: calc(42vh - 5.5rem);
+  }
+  .btn-quick-chat {
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(201, 162, 39, 0.28);
+    border-radius: 999px; color: rgba(245, 230, 200, 0.88); padding: 0.28rem 0.55rem;
+    font-size: 0.74rem; cursor: pointer; white-space: nowrap; max-width: 100%;
+  }
+  .btn-quick-chat:hover { background: rgba(201, 162, 39, 0.2); border-color: rgba(201, 162, 39, 0.5); color: var(--gold-light); }
+
   .mode-tabs { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1rem; }
   .mode-tab { background: rgba(255,255,255,0.06); border: 1px solid rgba(201,162,39,0.25); border-radius: 8px; color: rgba(245,230,200,0.6); padding: 0.45rem 1.1rem; cursor: pointer; font-size: 1rem; }
   .mode-tab.active { background: rgba(201,162,39,0.25); border-color: var(--gold); color: var(--gold-light); }
@@ -276,6 +314,15 @@
     <div class="final-scores" id="finalScores"></div>
     <button class="btn-primary" onclick="resetGame()" style="margin-top:1.5rem;">🔄 다시 항해하기</button>
   </div>
+
+  <div id="quickChatDock" class="quick-chat-dock collapsed-phrases" style="display:none;" aria-label="퀵채팅">
+    <div class="quick-chat-dock-head">
+      <span><strong>💬 퀵채팅</strong> · 온라인 방</span>
+      <button type="button" class="btn-chat-toggle" id="btnQuickChatToggle" onclick="toggleQuickChatPhrases()">문구 펼치기</button>
+    </div>
+    <div class="quick-chat-log" id="quickChatLog"></div>
+    <div class="quick-chat-phrases" id="quickChatPhrases"></div>
+  </div>
 </div>
 
 <div id="turnCover" class="turn-cover" style="display:none;">
@@ -321,7 +368,11 @@ const SNAMES={red:'♥빨',blue:'♦파',yellow:'♣노',black:'♠검',purple:'
 const AVATARS=['🦜','🐙','🦈','🐚','⚓','🐠'];
 const PCOLORS=['#c94040','#4070c9','#c9a020','#9040c9','#40a960','#c96040'];
 let G={};
-const NET={ws:null,playerId:null,roomCode:null,connected:false,roundModalShown:false,trickReviewKey:null};
+const NET={ws:null,playerId:null,roomCode:null,connected:false,roundModalShown:false,trickReviewKey:null,quickChatBuf:[],quickChatRoom:null,quickChatPhrasesOpen:false};
+
+const QUICK_CHAT_PHRASES=[
+  '스겜','풉킼','쫄?','ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ','한판더?','장난장난ㅋ','헐','나이스','미안!','잠시만','화이팅!','억까;;;','개빡집중','어?','이게되네','레전드','살려줘','냠','EZ','ㅎㅇ','방가방가'
+];
 
 function isStaticHost(){
   return location.hostname.endsWith('github.io')||location.protocol==='file:';
@@ -353,7 +404,7 @@ function connectNet(cb){
   NET.ws=ws;
   NET.pendingCb=cb;
   ws.onopen=()=>{NET.connected=true;setNetStatus('연결됨',true);tryNetPending();};
-  ws.onclose=()=>{NET.connected=false;NET.playerId=null;setNetStatus('연결 끊김 — 페이지를 새로고침하세요',false);};
+  ws.onclose=()=>{NET.connected=false;NET.playerId=null;setNetStatus('연결 끊김 — 페이지를 새로고침하세요',false);syncQuickChatDock();};
   ws.onerror=()=>setNetStatus('서버에 연결할 수 없습니다. npm start 로 서버를 실행하세요',false);
   ws.onmessage=(e)=>{
     const msg=JSON.parse(e.data);
@@ -372,6 +423,7 @@ function sendNet(type,data){
 
 function handleNetMessage(msg){
   if(msg.type==='error'){alert(msg.message);return;}
+  if(msg.type==='quick_chat'){pushQuickChatLine(msg.fromAvatar,msg.fromName,msg.text);return;}
   if(msg.type==='room'){applyRoomState(msg.room);return;}
   if(msg.type==='game'){applyOnlineGame(msg.state,msg.hand,msg.myIdx);return;}
 }
@@ -407,6 +459,7 @@ function joinOnlineRoom(){
 }
 
 function applyRoomState(room){
+  if(NET.quickChatRoom!==room.code){NET.quickChatBuf=[];NET.quickChatRoom=room.code;renderQuickChatLog();}
   NET.roomCode=room.code;
   document.getElementById('displayRoomCode').textContent=room.code;
   const me=room.players.find(p=>p.id===NET.playerId);
@@ -427,7 +480,7 @@ function applyRoomState(room){
 function startOnlineGame(){sendNet('start_game');}
 
 function leaveRoom(){
-  NET.roomCode=null;
+  NET.roomCode=null;NET.quickChatRoom=null;NET.quickChatBuf=[];renderQuickChatLog();syncQuickChatDock();
   if(NET.ws)NET.ws.close();
   NET.ws=null;NET.connected=false;
   G={};
@@ -632,7 +685,55 @@ function showTurnCover(pIdx,mode,onReady){
   };
 }
 
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');syncQuickChatDock();}
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function pushQuickChatLine(av,name,text){
+  NET.quickChatBuf.push({av,name,text});
+  if(NET.quickChatBuf.length>40)NET.quickChatBuf.shift();
+  renderQuickChatLog();
+}
+function renderQuickChatLog(){
+  const log=document.getElementById('quickChatLog');
+  if(!log)return;
+  log.innerHTML=NET.quickChatBuf.map(e=>`<div class="qc-line"><span class="qc-who">${escapeHtml(e.av)} ${escapeHtml(e.name)}</span><span class="qc-txt">${escapeHtml(e.text)}</span></div>`).join('');
+  log.scrollTop=log.scrollHeight;
+}
+function syncQuickChatDock(){
+  const dock=document.getElementById('quickChatDock');
+  if(!dock)return;
+  const active=document.querySelector('.screen.active');
+  const sid=active?active.id:'';
+  const inRoom=!!NET.roomCode&&NET.ws&&NET.ws.readyState===1;
+  const show=inRoom&&(sid==='waitingRoom'||sid==='game'||sid==='final');
+  dock.style.display=show?'flex':'none';
+  document.body.classList.toggle('chat-dock-on',show);
+}
+function toggleQuickChatPhrases(){
+  const dock=document.getElementById('quickChatDock');
+  const btn=document.getElementById('btnQuickChatToggle');
+  if(!dock||!btn)return;
+  NET.quickChatPhrasesOpen=!NET.quickChatPhrasesOpen;
+  dock.classList.toggle('collapsed-phrases',!NET.quickChatPhrasesOpen);
+  btn.textContent=NET.quickChatPhrasesOpen?'문구 접기':'문구 펼치기';
+}
+function sendQuickChat(text){
+  if(!QUICK_CHAT_PHRASES.includes(text))return;
+  if(!NET.roomCode||!NET.ws||NET.ws.readyState!==1){alert('온라인 방에 있을 때만 퀵채팅을 쓸 수 있습니다.');return;}
+  sendNet('quick_chat',{text});
+}
+function initQuickChatUi(){
+  const wrap=document.getElementById('quickChatPhrases');
+  if(!wrap||wrap.children.length)return;
+  QUICK_CHAT_PHRASES.forEach((t)=>{
+    const b=document.createElement('button');
+    b.type='button';b.className='btn-quick-chat';b.textContent=t;
+    b.onclick=()=>sendQuickChat(t);
+    wrap.appendChild(b);
+  });
+}
 
 function startRound(){
   G.bids={}; G.currentTrick=[]; G.trickCount=0; G.trickLeader=0;
@@ -1054,5 +1155,6 @@ function addPlayer(){
   if(count>=5)document.getElementById('btnAddPlayer').style.display='none';
 }
 addPlayer();addPlayer();addPlayer();
+initQuickChatUi();
 initPagesUi();
 </script>
