@@ -2,7 +2,7 @@
  * 간단한 AI 입찰/플레이 (서버 + 브라우저 공용).
  * 브라우저: trick-rules.js 다음에 로드 → SkullKingRules 사용.
  */
-const determineTrickWinner =
+const _determineTrickWinner =
   typeof module !== 'undefined' && module.exports
     ? require('./trick-rules').determineTrickWinner
     : globalThis.SkullKingRules && globalThis.SkullKingRules.determineTrickWinner;
@@ -19,7 +19,7 @@ function peekTrickOutcome(trick) {
   if (hasKraken) {
     const withoutKraken = trick.filter((e) => e.card.type !== 'kraken');
     let nextLeader = trick[0].pIdx;
-    if (withoutKraken.length > 0) nextLeader = determineTrickWinner(withoutKraken, false).pIdx;
+    if (withoutKraken.length > 0) nextLeader = _determineTrickWinner(withoutKraken, false).pIdx;
     return { winnerIdx: null, nextLeader };
   }
 
@@ -33,7 +33,7 @@ function peekTrickOutcome(trick) {
     return { winnerIdx: w, nextLeader: w };
   }
 
-  const w = determineTrickWinner(trick, false).pIdx;
+  const w = _determineTrickWinner(trick, false).pIdx;
   return { winnerIdx: w, nextLeader: w };
 }
 

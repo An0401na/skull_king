@@ -768,7 +768,9 @@ function initQuickChatUi(){
 
 function startRound(){
   G.bids={}; G.currentTrick=[]; G.trickCount=0; G.trickLeader=0;
-  G.currentBidder=0; G.phase='bid'; G.selectedCard=null;
+  // 라운드마다 시작 플레이어가 돌아가도록 (입찰 시작도 동일)
+  G.trickLeader=(G.round-1)%G.players.length;
+  G.currentBidder=G.trickLeader; G.phase='bid'; G.selectedCard=null;
   hideSecretView();
   let deck=shuffle(buildDeck());
   G.players.forEach((p,i)=>{p.hand=deck.slice(i*G.round,(i+1)*G.round);p.tricksWon=0;p.bonusPoints=0;});
@@ -806,6 +808,18 @@ function makeLocalAiGameStub(){
   };
 }
 
+function localAiChooseBid(stub,idx){
+  const ai=globalThis.SkullKingAi;
+  if(ai&&typeof ai.aiChooseBid==='function') return ai.aiChooseBid(stub,idx);
+  return Math.max(0,Math.min(G.round,Math.floor(Math.random()*(G.round+1))));
+}
+function localAiChooseCardId(stub,idx){
+  const ai=globalThis.SkullKingAi;
+  if(ai&&typeof ai.aiChooseCard==='function') return ai.aiChooseCard(stub,idx);
+  const hand=G.players[idx]&&G.players[idx].hand||[];
+  return hand[0]?hand[0].id:null;
+}
+
 function showBidPanel(){
   document.getElementById('bidPanel').style.display='block';
   document.getElementById('playPanel').style.display='none';
@@ -829,7 +843,7 @@ function doNextBid(){
     showHandHidden();
     setTimeout(()=>{
       const stub=makeLocalAiGameStub();
-      const v=SkullKingAi.aiChooseBid(stub,idx);
+      const v=localAiChooseBid(stub,idx);
       submitLocalBid(v);
     },400);
     return;
@@ -880,7 +894,7 @@ function submitLocalBid(val){
 }
 
 function startPlayPhase(){
-  G.phase='play'; G.currentTrick=[]; G.trickCount=0; G.trickLeader=0;
+  G.phase='play'; G.currentTrick=[]; G.trickCount=0;
   hideSecretView();
   updateHeader();
   document.getElementById('bidPanel').style.display='none';
@@ -903,7 +917,7 @@ function doNextPlay(){
     document.getElementById('handLabel').textContent=`${G.players[pIdx].avatar} ${G.players[pIdx].name} · 🤖 생각 중…`;
     setTimeout(()=>{
       const stub=makeLocalAiGameStub();
-      const cid=SkullKingAi.aiChooseCard(stub,pIdx);
+      const cid=localAiChooseCardId(stub,pIdx);
       const card=G.players[pIdx].hand.find(c=>c.id===cid)||G.players[pIdx].hand[0];
       playCard(pIdx,card);
     },420);

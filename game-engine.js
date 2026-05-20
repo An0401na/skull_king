@@ -115,9 +115,10 @@ function startRound(game) {
   game.bids = {};
   game.currentTrick = [];
   game.trickCount = 0;
-  game.trickLeader = 0;
-  game.currentBidder = 0;
-  game.activePlayerIdx = 0;
+  // 라운드마다 시작 플레이어가 돌아가도록
+  game.trickLeader = (game.round - 1) % game.players.length;
+  game.currentBidder = game.trickLeader;
+  game.activePlayerIdx = game.currentBidder;
   game.phase = 'bid';
   game.lastTrickResult = null;
   game.roundSummary = null;
@@ -272,8 +273,8 @@ function startPlayPhase(game) {
   game.phase = 'play';
   game.currentTrick = [];
   game.trickCount = 0;
-  game.trickLeader = 0;
-  game.activePlayerIdx = 0;
+  // 입찰이 시작된 리더가 첫 트릭도 리드
+  game.activePlayerIdx = game.trickLeader;
 }
 
 function applyBid(game, playerIdx, value) {
