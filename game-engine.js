@@ -282,10 +282,11 @@ function applyBid(game, playerIdx, value) {
   if (playerIdx !== game.currentBidder) return { ok: false, error: '지금은 당신 차례가 아닙니다.' };
   if (value < 0 || value > game.round) return { ok: false, error: '잘못된 입찰입니다.' };
   game.bids[playerIdx] = value;
-  game.currentBidder++;
-  game.activePlayerIdx = game.currentBidder;
-  if (game.currentBidder >= game.players.length) {
+  if (Object.keys(game.bids).length >= game.players.length) {
     startPlayPhase(game);
+  } else {
+    game.currentBidder = (playerIdx + 1) % game.players.length;
+    game.activePlayerIdx = game.currentBidder;
   }
   return { ok: true };
 }

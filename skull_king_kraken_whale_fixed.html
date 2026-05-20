@@ -799,7 +799,7 @@ function showBidPanel(){
 
 function doNextBid(){
   if(G.online)return;
-  if(G.currentBidder>=G.players.length){startPlayPhase();return;}
+  if(Object.keys(G.bids).length>=G.players.length){startPlayPhase();return;}
   const idx=G.currentBidder;
   G.activePIdx=idx;
   if(G.players[idx].isAi){
@@ -853,7 +853,7 @@ function confirmBid(){
 function submitLocalBid(val){
   const i=G.currentBidder;
   G.bids[i]=val;
-  G.currentBidder++;
+  G.currentBidder=(i+1)%G.players.length;
   document.getElementById('bidsDisplay').innerHTML=Object.entries(G.bids).map(([j,b])=>`
     <div class="bid-tag">${G.players[j].avatar} ${G.players[j].name}: <span>${b}</span></div>`).join('');
   hideSecretView();
@@ -864,6 +864,7 @@ function submitLocalBid(val){
 
 function startPlayPhase(){
   G.phase='play'; G.currentTrick=[]; G.trickCount=0;
+  G.activePIdx=G.trickLeader;
   hideSecretView();
   updateHeader();
   document.getElementById('bidPanel').style.display='none';
