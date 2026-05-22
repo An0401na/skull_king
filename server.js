@@ -58,6 +58,8 @@ app.get('/', (_req, res) => {
 
 const rooms = new Map();
 const connections = new Map();
+const WS_HEARTBEAT_INTERVAL_MS = 25000;
+const EMPTY_ROOM_TTL_MS = 10 * 60 * 1000;
 
 function genRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -96,6 +98,53 @@ function send(ws, msg) {
   if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));
 }
 
+function hasConnectedHuman(room) {
+  return room.players.some((p) => !p.isAi && connections.has(p.id));
+}
+
+function connectedHumanPlayers(room) {
+  return room.players.filter((p) => !p.isAi && connections.has(p.id));
+}
+
+function assignHostOrDelete(room) {
+  const nextHost = connectedHumanPlayers(room)[0];
+  if (!nextHost) {
+    rooms.delete(room.code);
+    return false;
+  }
+  room.hostId = nextHost.id;
+  return true;
+}
+
+function removePlayerFromRoom(room, playerId) {
+  const idx = playerIdx(room, playerId);
+  if (idx < 0) return { removed: false, roomAlive: true };
+  const [removed] = room.players.splice(idx, 1);
+  if (removed && connections.get(removed.id)) connections.delete(removed.id);
+  if (room.hostId === playerId && !assignHostOrDelete(room)) return { removed: true, roomAlive: false };
+  if (!hasConnectedHuman(room)) {
+    rooms.delete(room.code);
+    return { removed: true, roomAlive: false };
+  }
+  return { removed: true, roomAlive: true };
+}
+
+function clearRoomCleanup(room) {
+  if (room && room._cleanupTimer) {
+    clearTimeout(room._cleanupTimer);
+    room._cleanupTimer = null;
+  }
+}
+
+function scheduleRoomCleanup(code, room) {
+  clearRoomCleanup(room);
+  if (hasConnectedHuman(room)) return;
+  room._cleanupTimer = setTimeout(() => {
+    const latest = rooms.get(code);
+    if (latest && !hasConnectedHuman(latest)) rooms.delete(code);
+  }, EMPTY_ROOM_TTL_MS);
+}
+
 function broadcastRoom(room, exceptId) {
   const payload = { type: 'room', room: publicRoom(room) };
   room.players.forEach((p) => {
@@ -128,7 +177,7 @@ function scheduleAiTurns(room) {
   room._aiTimer = setTimeout(() => {
     room._aiTimer = null;
     runAiTurnChain(room);
-  }, 340);
+  }, 900);
 }
 
 function runAiTurnChain(room) {
@@ -202,6 +251,10 @@ function joinRoom(code, playerId, name) {
 wss.on('connection', (ws) => {
   let playerId = genId();
   let roomCode = null;
+  ws.isAlive = true;
+  ws.on('pong', () => {
+    ws.isAlive = true;
+  });
 
   send(ws, { type: 'hello', playerId });
 
@@ -217,11 +270,13 @@ wss.on('connection', (ws) => {
     if (msg.type === 'create_room') {
       const name = (msg.name || '').trim().slice(0, 20) || '선장';
       playerId = msg.playerId || playerId;
+      if (connections.has(playerId)) connections.get(playerId).close();
       connections.set(playerId, ws);
       const room = createRoom(playerId, name);
       roomCode = room.code;
       ws.playerId = playerId;
       ws.roomCode = roomCode;
+      clearRoomCleanup(room);
       syncRoom(room);
       return;
     }
@@ -229,6 +284,7 @@ wss.on('connection', (ws) => {
     if (msg.type === 'join_room') {
       const name = (msg.name || '').trim().slice(0, 20) || '선원';
       playerId = msg.playerId || playerId;
+      if (connections.has(playerId)) connections.get(playerId).close();
       connections.set(playerId, ws);
       const result = joinRoom(msg.code, playerId, name);
       if (result.error) {
@@ -239,7 +295,29 @@ wss.on('connection', (ws) => {
       roomCode = room.code;
       ws.playerId = playerId;
       ws.roomCode = roomCode;
+      clearRoomCleanup(room);
       syncRoom(room);
+      return;
+    }
+
+    if (msg.type === 'reconnect_room') {
+      const code = String(msg.code || '').toUpperCase();
+      const room = rooms.get(code);
+      const requestedId = msg.playerId || playerId;
+      if (!room || playerIdx(room, requestedId) < 0) {
+        send(ws, { type: 'error', message: '이전 방에 재접속할 수 없습니다. 새로 방을 만들거나 코드로 다시 참가하세요.' });
+        return;
+      }
+      playerId = requestedId;
+      const oldWs = connections.get(playerId);
+      if (oldWs && oldWs !== ws) oldWs.close();
+      connections.set(playerId, ws);
+      roomCode = room.code;
+      ws.playerId = playerId;
+      ws.roomCode = roomCode;
+      clearRoomCleanup(room);
+      syncRoom(room);
+      scheduleAiTurns(room);
       return;
     }
 
@@ -299,15 +377,32 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.type === 'leave_room') {
+      if (connections.get(playerId) === ws) connections.delete(playerId);
+      const result = removePlayerFromRoom(room, playerId);
+      ws.roomCode = null;
+      roomCode = null;
+      if (result.roomAlive) syncRoom(room);
+      ws.close();
+      return;
+    }
+
     if (msg.type === 'start_game') {
       if (room.hostId !== playerId) {
         send(ws, { type: 'error', message: '방장만 게임을 시작할 수 있습니다.' });
         return;
       }
-      if (room.players.length < 2) {
-        send(ws, { type: 'error', message: '최소 2명이 필요합니다.' });
+      room.players = room.players.filter((p) => p.isAi || connections.has(p.id));
+      if (!room.players.some((p) => !p.isAi && connections.has(p.id))) {
+        rooms.delete(room.code);
         return;
       }
+      if (room.players.length < 2) {
+        send(ws, { type: 'error', message: '최소 2명이 필요합니다.' });
+        syncRoom(room);
+        return;
+      }
+      if (!room.players.some((p) => p.id === room.hostId)) room.hostId = connectedHumanPlayers(room)[0].id;
       room.status = 'playing';
       room.game = createGameState(room.players);
       startRound(room.game);
@@ -354,17 +449,28 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
-    connections.delete(playerId);
+    if (connections.get(playerId) === ws) connections.delete(playerId);
     const code = ws.roomCode || roomCode;
     if (!code) return;
     const room = rooms.get(code);
     if (!room) return;
     syncRoom(room);
-    if (room.players.every((p) => p.isAi || !connections.has(p.id))) {
-      rooms.delete(code);
-    }
+    scheduleRoomCleanup(code, room);
   });
 });
+
+const heartbeat = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      ws.terminate();
+      return;
+    }
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, WS_HEARTBEAT_INTERVAL_MS);
+
+wss.on('close', () => clearInterval(heartbeat));
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Skull King server listening on port ${PORT}`);

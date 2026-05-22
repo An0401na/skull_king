@@ -89,7 +89,7 @@ function getTrickLeaderCandidate(trick) {
   return { entry, note: null };
 }
 
-const api = {
+const skullKingRulesApi = {
   BLACK_SUIT,
   LEGACY_BLACK,
   isBlackSuit,
@@ -98,7 +98,7 @@ const api = {
 };
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = api;
+  module.exports = skullKingRulesApi;
 } else {
-  globalThis.SkullKingRules = api;
+  globalThis.SkullKingRules = skullKingRulesApi;
 }

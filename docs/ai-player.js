@@ -137,9 +137,9 @@ function aiChooseCard(game, playerIdx) {
   return hi[0].id;
 }
 
-const api = { aiChooseBid, aiChooseCard, peekTrickOutcome };
+const skullKingAiApi = { aiChooseBid, aiChooseCard, peekTrickOutcome };
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = api;
+  module.exports = skullKingAiApi;
 }
-globalThis.SkullKingAi = api;
+globalThis.SkullKingAi = skullKingAiApi;
